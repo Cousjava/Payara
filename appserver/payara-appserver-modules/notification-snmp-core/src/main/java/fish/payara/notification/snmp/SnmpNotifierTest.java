@@ -37,34 +37,36 @@
  *     only if the new code is made subject to such option by the copyright
  *     holder.
  */
-package fish.payara.nucleus.notification;
+package fish.payara.notification.snmp;
 
-import java.util.logging.Level;
+import fish.payara.nucleus.notification.TestNotifier;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import fish.payara.nucleus.notification.domain.NotificationEvent;
-import fish.payara.nucleus.notification.service.BaseNotifierService;
+import javax.inject.Inject;
+import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.internal.api.ServerContext;
 
 /**
  *
- * @author jonathan coustick
+ * @author jonathan
  */
-public abstract class TestNotifier {
+public class SnmpNotifierTest extends TestNotifier {
     
-    /**
-     * 
-     * @return the LogRecord if there is an error, null otherwise
-     */
-    public abstract LogRecord testNotifier();
+    @Inject
+    ServiceLocator habitat;
     
-    protected LogRecord processEvent(NotificationEvent event, Logger logger, BaseNotifierService service ){
-        BlockingQueueHandler bqh = new BlockingQueueHandler();
-        bqh.setLevel(Level.SEVERE);
-        logger.addHandler(bqh);
-        service.handleNotification(event);
-        LogRecord record = bqh.poll();
-        logger.removeHandler(bqh);
-        return record;   
+    @Inject
+    ServerContext serverctx;
+    
+    @Override
+    public LogRecord testNotifier(){
+        SnmpNotifierService service = habitat.getService(SnmpNotifierService.class);
+        SnmpNotificationEvent event = new SnmpNotificationEvent();
+        event.setInstanceName(serverctx.getInstanceName());
+        event.setSubject("Test Notification");
+        event.setMessage("Snmp Notifier Test");       
+        Logger logger = Logger.getLogger(SnmpNotificationRunnable.class.getCanonicalName());
+        LogRecord record = processEvent(event, logger, service);       
+        return record;
     }
-    
 }

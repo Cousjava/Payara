@@ -37,34 +37,37 @@
  *     only if the new code is made subject to such option by the copyright
  *     holder.
  */
-package fish.payara.nucleus.notification;
+package fish.payara.notification.newrelic;
 
-import java.util.logging.Level;
+import fish.payara.nucleus.notification.TestNotifier;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import fish.payara.nucleus.notification.domain.NotificationEvent;
-import fish.payara.nucleus.notification.service.BaseNotifierService;
+import javax.inject.Inject;
+import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.internal.api.ServerContext;
 
 /**
  *
- * @author jonathan coustick
+ * @author jonathan
  */
-public abstract class TestNotifier {
+public class NewRelicNotifierTest extends TestNotifier {
     
-    /**
-     * 
-     * @return the LogRecord if there is an error, null otherwise
-     */
-    public abstract LogRecord testNotifier();
+        @Inject
+    ServiceLocator habitat;
     
-    protected LogRecord processEvent(NotificationEvent event, Logger logger, BaseNotifierService service ){
-        BlockingQueueHandler bqh = new BlockingQueueHandler();
-        bqh.setLevel(Level.SEVERE);
-        logger.addHandler(bqh);
-        service.handleNotification(event);
-        LogRecord record = bqh.poll();
-        logger.removeHandler(bqh);
-        return record;   
+    @Inject
+    ServerContext serverctx;
+    
+    @Override
+    public LogRecord testNotifier(){
+        NewRelicNotifierService service = habitat.getService(NewRelicNotifierService.class);
+        NewRelicNotificationEvent event = new NewRelicNotificationEvent();
+        event.setInstanceName(serverctx.getInstanceName());
+        event.setSubject("Test Notification");
+        event.setMessage("NewRelic Notifier Test");       
+        Logger logger = Logger.getLogger(NewRelicNotificationRunnable.class.getCanonicalName());
+        LogRecord record = processEvent(event, logger, service);       
+        return record;
     }
     
 }

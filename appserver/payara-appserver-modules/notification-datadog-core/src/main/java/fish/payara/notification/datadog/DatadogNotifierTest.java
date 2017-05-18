@@ -37,34 +37,35 @@
  *     only if the new code is made subject to such option by the copyright
  *     holder.
  */
-package fish.payara.nucleus.notification;
+package fish.payara.notification.datadog;
 
-import java.util.logging.Level;
+import fish.payara.nucleus.notification.TestNotifier;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import fish.payara.nucleus.notification.domain.NotificationEvent;
-import fish.payara.nucleus.notification.service.BaseNotifierService;
+import javax.inject.Inject;
+import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.internal.api.ServerContext;
 
 /**
  *
  * @author jonathan coustick
  */
-public abstract class TestNotifier {
+public class DatadogNotifierTest extends TestNotifier {
+    @Inject
+    ServiceLocator habitat;
     
-    /**
-     * 
-     * @return the LogRecord if there is an error, null otherwise
-     */
-    public abstract LogRecord testNotifier();
+    @Inject
+    ServerContext serverctx;
     
-    protected LogRecord processEvent(NotificationEvent event, Logger logger, BaseNotifierService service ){
-        BlockingQueueHandler bqh = new BlockingQueueHandler();
-        bqh.setLevel(Level.SEVERE);
-        logger.addHandler(bqh);
-        service.handleNotification(event);
-        LogRecord record = bqh.poll();
-        logger.removeHandler(bqh);
-        return record;   
+    @Override
+    public LogRecord testNotifier(){
+        DatadogNotifierService service = habitat.getService(DatadogNotifierService.class);
+        DatadogNotificationEvent event = new DatadogNotificationEvent();
+        event.setInstanceName(serverctx.getInstanceName());
+        event.setSubject("Test Notification");
+        event.setMessage("Datadog Notifier Test");       
+        Logger logger = Logger.getLogger(DatadogNotificationRunnable.class.getCanonicalName());
+        LogRecord record = processEvent(event, logger, service);       
+        return record;
     }
-    
 }

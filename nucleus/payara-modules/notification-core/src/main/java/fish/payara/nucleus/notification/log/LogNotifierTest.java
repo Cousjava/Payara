@@ -49,7 +49,7 @@ import org.glassfish.internal.api.ServerContext;
  *
  * @author jonathan coustick
  */
-public class LogNotifierTest implements TestNotifier {
+public class LogNotifierTest extends TestNotifier {
     
     @Inject
     ServiceLocator habitat;
