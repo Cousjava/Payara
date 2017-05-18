@@ -51,7 +51,7 @@ import org.glassfish.internal.api.ServerContext;
  * @author jonathan coustick
  */
 public class EventbusNotifierTest extends TestNotifier {
-        @Inject
+    @Inject
     ServiceLocator habitat;
     
     @Inject
@@ -64,7 +64,7 @@ public class EventbusNotifierTest extends TestNotifier {
         event.setInstanceName(serverctx.getInstanceName());
         event.setSubject("Test Notification");
         event.setMessage("Eventbus Notifier Test");       
-        Logger logger = Logger.getLogger(EventbusNotificationRunnable.class.getCanonicalName());
+        Logger logger = Logger.getLogger(EventbusNotifierService.class.getCanonicalName());
         LogRecord record = processEvent(event, logger, service);       
         return record;
     }

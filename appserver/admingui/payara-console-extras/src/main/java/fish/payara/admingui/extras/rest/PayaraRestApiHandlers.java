@@ -41,6 +41,7 @@ import com.sun.jsftemplating.annotation.Handler;
 import com.sun.jsftemplating.annotation.HandlerInput;
 import com.sun.jsftemplating.annotation.HandlerOutput;
 import com.sun.jsftemplating.layout.descriptors.handler.HandlerContext;
+import fish.payara.admingui.extras.NotifierTest;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,8 +49,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.inject.Inject;
 import org.glassfish.admingui.common.util.GuiUtil;
 import org.glassfish.admingui.common.util.RestUtil;
+import fish.payara.notification.hipchat.*;
+import fish.payara.nucleus.notification.TestNotifier;
+import fish.payara.nucleus.notification.configuration.NotifierType;
+import fish.payara.nucleus.notification.log.LogNotifierTest;
+import java.util.logging.LogRecord;
 
 /**
  * A class containing Payara specific handler methods for the REST API
@@ -430,5 +437,56 @@ public class PayaraRestApiHandlers
         }
         handlerCtx.setOutputValue("result", messages);
     }
-       
+    
+    @Handler(id = "py.testNotifier",
+            input = @HandlerInput(name="notifierName", type = String.class, required = true))
+    public static void testNotifier(HandlerContext handlerctx){
+        String notifier = (String) handlerctx.getInputValue("notifierName");
+        notifier = notifier.toUpperCase();
+        TestNotifier test;
+        switch (notifier){
+            case "LOG":
+                test = new LogNotifierTest();
+                break;
+            case "HIPCHAT":
+                test = new HipchatNotifierTest();                
+                break;
+            case "SLACK":
+                test = new SlackNotifierTest();
+                break;
+            case "JMS":
+                test = new JmsNotifierTest();
+                break;
+            case "EMAIL":
+                test = new EmailNotifierTest();
+                break;
+            case "XMPP":
+                test = new XmppNotifierTest();
+                break;
+            case "SNMP":
+                test = new SnmpNotifierTest();
+                break;
+            case "EVENTBUS":
+                test = new EventbusNotifierTest();
+                break;
+            case "NEWRELIC":
+                test = new NewRelicNotifierTest();
+                break;
+            case "DATADOG":
+                test = new DatadogNotifierTest();
+                break;
+            default:
+                test = null;
+                break;
+        }
+        
+        if (test == null){
+            //Not a valid notifier
+        }
+        LogRecord lr = test.testNotifier();
+        if (lr != null){
+            //Something went wrong in the test
+        }
+    
+    }   
 }
