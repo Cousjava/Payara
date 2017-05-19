@@ -55,7 +55,7 @@ import org.glassfish.internal.api.ServerContext;
  * and will be used by end users.
  * @author jonathan coustick
  */
-public class NotifierTest {
+public abstract class NotifierTest {
     
     protected ServiceLocator habitat;
     protected ServerContext serverctx;
@@ -67,19 +67,23 @@ public class NotifierTest {
         serverctx = habitat.getService(ServerContext.class);
     }
     /**
-     * 
+     * Tests the notifier
      * @return the LogRecord if there is an error, null otherwise
      */
-    public LogRecord testNotifier(){
-        return null;
-        
-    }
+    public abstract LogRecord testNotifier();
     
-    protected LogRecord processEvent(NotificationEvent event, Logger logger, BaseNotifierService service ){
+    protected synchronized LogRecord processEvent(NotificationEvent event, Logger logger, BaseNotifierService service ){
         BlockingQueueHandler bqh = new BlockingQueueHandler();
-        bqh.setLevel(Level.SEVERE);
+        bqh.setLevel(Level.FINER);
         logger.addHandler(bqh);
         service.handleNotification(event);
+        try {
+            //Thread.currentThread().
+            wait(500);
+            Thread.sleep(500);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(NotifierTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
         LogRecord record = bqh.poll();
         logger.removeHandler(bqh);
         return record;   

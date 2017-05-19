@@ -78,6 +78,8 @@ public class HipchatNotificationRunnable extends NotificationRunnable<HipchatMes
                         logger.log(Level.SEVERE,
                                 "Error occurred while connecting Hipchat. Check your room name and token. HTTP response code",
                                 connection.getResponseCode());
+                    } else {
+                        logger.log(Level.FINER, "Successfully sent message");
                     }
                 }
             }

@@ -486,12 +486,16 @@ public class PayaraRestApiHandlers
         }
         
         if (test == null){
+            GuiUtil.prepareAlert("error", "Not a valid notifier", null);
             return;
             //Not a valid notifier
         }
         LogRecord lr = test.testNotifier();
         if (lr != null){
             //Something went wrong in the test
+            GuiUtil.prepareAlert("error", lr.getMessage(), null);
+        } else {
+            GuiUtil.prepareAlert("success", "Notification successfully sent", null);
         }
     
     }   
