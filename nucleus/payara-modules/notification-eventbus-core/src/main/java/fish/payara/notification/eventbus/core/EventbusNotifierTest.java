@@ -39,23 +39,23 @@
  */
 package fish.payara.notification.eventbus.core;
 
-import fish.payara.nucleus.notification.TestNotifier;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.inject.Inject;
+import fish.payara.nucleus.notification.NotifierTest;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.internal.api.ServerContext;
+import org.jvnet.hk2.annotations.Service;
 
 /**
  *
  * @author jonathan coustick
  */
-public class EventbusNotifierTest extends TestNotifier {
-    @Inject
-    ServiceLocator habitat;
+@Service
+public class EventbusNotifierTest extends NotifierTest {
     
     @Inject
-    ServerContext serverctx;
+    private ServerContext serverctx;
     
     @Override
     public LogRecord testNotifier(){

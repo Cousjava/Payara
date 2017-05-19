@@ -39,7 +39,7 @@
  */
 package fish.payara.notification.jms;
 
-import fish.payara.nucleus.notification.TestNotifier;
+import fish.payara.nucleus.notification.NotifierTest;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.inject.Inject;
@@ -50,9 +50,9 @@ import org.glassfish.internal.api.ServerContext;
  *
  * @author jonathan
  */
-public class JmsNotifierTest extends TestNotifier {
+public class JmsNotifierTest extends NotifierTest {
     
-        @Inject
+    @Inject
     ServiceLocator habitat;
     
     @Inject

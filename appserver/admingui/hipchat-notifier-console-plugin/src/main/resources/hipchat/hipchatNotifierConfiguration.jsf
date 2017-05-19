@@ -46,6 +46,11 @@
 #include "/payaraExtras/notification/notificationConfigTabs.inc"
     <sun:title id="propertyContentPage" title="$resource{i18nhn.notifier.hipchat.configuration.pageTitle}" 
                helpText="$resource{i18nhn.notifier.hipchat.configuration.pageHelpText}" >
+        <sun:button id = "test" text="$resource{i18nhn.notifier.hipchat.buttons.test}">
+            <!command 
+                py.testNotifier(notifierName="HIPCHAT");
+                />
+        </sun:button>
         <!facet pageButtonsTop>
             <sun:panelGroup id="topButtons">
                 <sun:button id="saveButton"  text="$resource{i18n.button.Save}"

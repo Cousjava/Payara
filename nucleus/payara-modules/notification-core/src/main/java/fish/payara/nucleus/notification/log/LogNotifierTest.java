@@ -41,21 +41,19 @@ package fish.payara.nucleus.notification.log;
 
 import javax.inject.Inject;
 import java.util.logging.LogRecord;
-import fish.payara.nucleus.notification.TestNotifier;
+import fish.payara.nucleus.notification.NotifierTest;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.internal.api.ServerContext;
+import org.jvnet.hk2.annotations.Service;
 
 /**
  *
  * @author jonathan coustick
  */
-public class LogNotifierTest extends TestNotifier {
+public class LogNotifierTest extends NotifierTest {
     
     @Inject
-    ServiceLocator habitat;
-    
-    @Inject
-    ServerContext serverctx;
+    private ServerContext serverctx;
     
     @Override
     public LogRecord testNotifier(){

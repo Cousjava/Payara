@@ -39,7 +39,7 @@
  */
 package fish.payara.notification.newrelic;
 
-import fish.payara.nucleus.notification.TestNotifier;
+import fish.payara.nucleus.notification.NotifierTest;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.inject.Inject;
@@ -50,10 +50,7 @@ import org.glassfish.internal.api.ServerContext;
  *
  * @author jonathan
  */
-public class NewRelicNotifierTest extends TestNotifier {
-    
-        @Inject
-    ServiceLocator habitat;
+public class NewRelicNotifierTest extends NotifierTest {
     
     @Inject
     ServerContext serverctx;

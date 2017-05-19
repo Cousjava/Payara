@@ -39,23 +39,41 @@
  */
 package fish.payara.nucleus.notification;
 
+import com.sun.enterprise.security.SecurityServicesUtil;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import fish.payara.nucleus.notification.domain.NotificationEvent;
 import fish.payara.nucleus.notification.service.BaseNotifierService;
+import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.internal.api.Globals;
+import org.glassfish.internal.api.ServerContext;
 
 /**
- *
+ * Superclass for testing of notifiers. This is not part of the test suite, and
+ * is instead used after configuring a notifier to make sure that it is working
+ * and will be used by end users.
  * @author jonathan coustick
  */
-public abstract class TestNotifier {
+public class NotifierTest {
     
+    protected ServiceLocator habitat;
+    protected ServerContext serverctx;
+    
+    protected static final String SUBJECT = "Notifier Test";
+    
+    public NotifierTest(){
+        habitat = Globals.getDefaultHabitat();
+        serverctx = habitat.getService(ServerContext.class);
+    }
     /**
      * 
      * @return the LogRecord if there is an error, null otherwise
      */
-    public abstract LogRecord testNotifier();
+    public LogRecord testNotifier(){
+        return null;
+        
+    }
     
     protected LogRecord processEvent(NotificationEvent event, Logger logger, BaseNotifierService service ){
         BlockingQueueHandler bqh = new BlockingQueueHandler();

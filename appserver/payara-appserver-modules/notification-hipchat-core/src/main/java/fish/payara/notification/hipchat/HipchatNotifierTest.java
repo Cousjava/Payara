@@ -40,31 +40,31 @@
 package fish.payara.notification.hipchat;
 
 import javax.inject.Inject;
-import fish.payara.nucleus.notification.TestNotifier;
+import fish.payara.nucleus.notification.NotifierTest;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.internal.api.ServerContext;
+import org.jvnet.hk2.annotations.Service;
 
 /**
  *
  * @author jonathan coustick
  */
-public class HipchatNotifierTest extends TestNotifier {
+public class HipchatNotifierTest extends NotifierTest {
     
-    @Inject
-    ServiceLocator habitat;
-    
-    @Inject
-    ServerContext serverctx;
+    private static final String MESSAGE = "Hipchat Notifier Test";
     
     @Override
     public LogRecord testNotifier(){
+        if (habitat == null){
+            Logger.getGlobal().log(Level.SEVERE, "Habitat not found");
+            return null;
+        }
+        
         HipchatNotifierService service = habitat.getService(HipchatNotifierService.class);
-        HipchatNotificationEvent event = new HipchatNotificationEvent();
-        event.setInstanceName(serverctx.getInstanceName());
-        event.setSubject("Test Notification");
-        event.setMessage("Hipchat Notifier Test");       
+        HipchatNotificationEventFactory factory = habitat.getService(HipchatNotificationEventFactory.class);
+        HipchatNotificationEvent event = factory.buildNotificationEvent(SUBJECT, MESSAGE);     
         Logger logger = Logger.getLogger(HipchatNotificationRunnable.class.getCanonicalName());
         LogRecord record = processEvent(event, logger, service);       
         return record;

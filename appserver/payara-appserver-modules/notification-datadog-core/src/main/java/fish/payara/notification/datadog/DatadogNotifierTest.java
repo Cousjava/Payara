@@ -39,7 +39,7 @@
  */
 package fish.payara.notification.datadog;
 
-import fish.payara.nucleus.notification.TestNotifier;
+import fish.payara.nucleus.notification.NotifierTest;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.inject.Inject;
@@ -50,9 +50,7 @@ import org.glassfish.internal.api.ServerContext;
  *
  * @author jonathan coustick
  */
-public class DatadogNotifierTest extends TestNotifier {
-    @Inject
-    ServiceLocator habitat;
+public class DatadogNotifierTest extends NotifierTest {
     
     @Inject
     ServerContext serverctx;

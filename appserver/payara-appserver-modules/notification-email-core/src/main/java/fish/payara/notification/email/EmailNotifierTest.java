@@ -39,7 +39,7 @@
  */
 package fish.payara.notification.email;
 
-import fish.payara.nucleus.notification.TestNotifier;
+import fish.payara.nucleus.notification.NotifierTest;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.inject.Inject;
@@ -50,11 +50,8 @@ import org.glassfish.internal.api.ServerContext;
  *
  * @author jonathan coustick
  */
-public class EmailNotifierTest extends TestNotifier {
+public class EmailNotifierTest extends NotifierTest {
 
-    @Inject
-    ServiceLocator habitat;
-    
     @Inject
     ServerContext serverctx;
     

@@ -41,7 +41,6 @@ import com.sun.jsftemplating.annotation.Handler;
 import com.sun.jsftemplating.annotation.HandlerInput;
 import com.sun.jsftemplating.annotation.HandlerOutput;
 import com.sun.jsftemplating.layout.descriptors.handler.HandlerContext;
-import fish.payara.admingui.extras.NotifierTest;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,13 +48,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import javax.inject.Inject;
 import org.glassfish.admingui.common.util.GuiUtil;
 import org.glassfish.admingui.common.util.RestUtil;
 import fish.payara.notification.hipchat.*;
-import fish.payara.nucleus.notification.TestNotifier;
-import fish.payara.nucleus.notification.configuration.NotifierType;
+import fish.payara.nucleus.notification.NotifierTest;
 import fish.payara.nucleus.notification.log.LogNotifierTest;
+import fish.payara.notification.slack.SlackNotifierTest;
+import fish.payara.notification.jms.JmsNotifierTest;
+import fish.payara.notification.email.EmailNotifierTest;
+import fish.payara.notification.xmpp.XmppNotifierTest;
+import fish.payara.notification.snmp.SnmpNotifierTest;
+import fish.payara.notification.newrelic.NewRelicNotifierTest;
+import fish.payara.notification.datadog.DatadogNotifierTest;
+import fish.payara.notification.eventbus.core.EventbusNotifierTest;
 import java.util.logging.LogRecord;
 
 /**
@@ -443,7 +448,7 @@ public class PayaraRestApiHandlers
     public static void testNotifier(HandlerContext handlerctx){
         String notifier = (String) handlerctx.getInputValue("notifierName");
         notifier = notifier.toUpperCase();
-        TestNotifier test;
+        NotifierTest test;
         switch (notifier){
             case "LOG":
                 test = new LogNotifierTest();
@@ -481,6 +486,7 @@ public class PayaraRestApiHandlers
         }
         
         if (test == null){
+            return;
             //Not a valid notifier
         }
         LogRecord lr = test.testNotifier();
