@@ -2,7 +2,7 @@
 
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2014 C2B2 Consulting Limited. All rights reserved.
+ Copyright (c) 2016 Payara Foundation and/or its affiliates. All rights reserved.
 
  The contents of this file are subject to the terms of the Common Development
  and Distribution License("CDDL") (collectively, the "License").  You
@@ -111,6 +111,9 @@
     </sun:property> 
     <sun:property id="liteProp" labelAlign="left" noWrap="#{true}" overlapLabel="#{false}" label="$resource{i18nhc.hazelcast.configuration.lite}"  helpText="$resource{i18nhc.hazelcast.configuration.liteHelp}">
         <sun:checkbox id="lite" selected="#{pageSession.valueMap['lite']}" selectedValue="true" />
+    </sun:property>
+    <sun:property id="hostawareProp" labelAlign="left" noWrap="#{true}" overlapLabel="#{false}" label="$resource{i18nhc.hazelcast.configuration.hostaware}"  helpText="$resource{i18nhc.hazelcast.configuration.hostawareHelp}">
+        <sun:checkbox id="hostaware" selected="#{pageSession.valueMap['hostAwareParitioning']}" selectedValue="true" />
     </sun:property>
 </sun:propertySheetSection>
 

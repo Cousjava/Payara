@@ -2,7 +2,7 @@
 
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2016 C2B2 Consulting Limited and/or its affiliates. 
+ Copyright (c) 2016 Payara Foundation and/or its affiliatess. 
  All rights reserved.
 
  The contents of this file are subject to the terms of the Common Development
@@ -28,7 +28,7 @@
 
 <event>
     <!beforeCreate
-        getRequestValue(key="config" value="#{pageSession.config}");
+        getRequestValue(key="config" value="#{pageSession.configName}");
         urlencode(value="#{pageSession.target}" encoding="UTF-8" result="#{pageSession.encodedTarget}");
         getRequestValue(key="isCluster" value="#{pageSession.isCluster}" default="false");
 
@@ -44,10 +44,10 @@
         }
 
         createMap(result="#{pageSession.attrsMap}")
-        mapPut(map="#{pageSession.attrsMap}" key="target" value="#{pageSession.config}");
-        gf.restRequest(endpoint="#{sessionScope.REST_URL}/get-hazelcast-configuration?target=#{pageSession.config}"  method="GET" result="#{requestScope.resp}");
+        mapPut(map="#{pageSession.attrsMap}" key="target" value="#{pageSession.configName}");
+        gf.restRequest(endpoint="#{sessionScope.REST_URL}/get-hazelcast-configuration?target=#{pageSession.configName}"  method="GET" result="#{requestScope.resp}");
         setPageSessionAttribute(key="valueMap", value="#{requestScope.resp.data.extraProperties.getHazelcastConfiguration}");
-        mapPut(map="#{pageSession.valueMap}" key="target" value="#{pageSession.config}");
+        mapPut(map="#{pageSession.valueMap}" key="target" value="#{pageSession.configName}");
         setPageSessionAttribute(key="convertToFalseList", value={"enabled","dynamic"});
         if (#{pageSession.valueMap['enabled']}=true) {
         setPageSessionAttribute(key="enabledSelected", value="true");
@@ -109,6 +109,9 @@
         <sun:property id="liteProp" labelAlign="left" noWrap="#{true}" overlapLabel="#{false}" label="$resource{i18nhc.hazelcast.configuration.lite}"  helpText="$resource{i18nhc.hazelcast.configuration.liteHelp}">
             <sun:checkbox id="lite" selected="#{pageSession.valueMap['lite']}" selectedValue="true" />
         </sun:property>
+    <sun:property id="hostawareProp" labelAlign="left" noWrap="#{true}" overlapLabel="#{false}" label="$resource{i18nhc.hazelcast.configuration.hostaware}"  helpText="$resource{i18nhc.hazelcast.configuration.hostawareHelp}">
+        <sun:checkbox id="hostaware" selected="#{pageSession.valueMap['hostAwareParitioning']}" selectedValue="true" />
+    </sun:property>
     </sun:propertySheetSection>
 </sun:propertySheet>
 <sun:hidden id="helpKey" value="$resource{help_full.batchConfiguration}" />

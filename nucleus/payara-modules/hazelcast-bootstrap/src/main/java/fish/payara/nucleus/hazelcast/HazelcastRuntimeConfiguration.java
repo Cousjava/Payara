@@ -2,7 +2,7 @@
 
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2014,2015 C2B2 Consulting Limited. All rights reserved.
+ Copyright (c) 2014,2016 Payara Foundation. All rights reserved.
 
  The contents of this file are subject to the terms of the Common Development
  and Distribution License("CDDL") (collectively, the "License").  You
@@ -24,7 +24,7 @@ import org.jvnet.hk2.config.Configured;
 
 /**
  *
- * @author steve
+ * @author Steve Millidge (Payara Foundation)
  */
 @Configured
 public interface HazelcastRuntimeConfiguration 
@@ -46,9 +46,20 @@ public interface HazelcastRuntimeConfiguration
     String getMulticastGroup();
     public void setMulticastGroup(String value);
     
+    
+    @Attribute(defaultValue = "false", dataType = Boolean.class)
+    String getGenerateNames();
+    public void setGenerateNames(String value);
+
+    
     @Attribute(defaultValue = "payara")
     String getMemberName();
     public void setMemberName(String value);
+
+    @Attribute(defaultValue = "MicroShoal")
+    String getMemberGroup();
+    public void setMemberGroup(String value);
+
     
     @Attribute(defaultValue = "development")
     String getClusterGroupName();
@@ -73,7 +84,27 @@ public interface HazelcastRuntimeConfiguration
     @Attribute(defaultValue = "payara/CachingProvider")
     String getCachingProviderJNDIName();
     public void setCachingProviderJNDIName(String value);
+
+    @Attribute(defaultValue = "false", dataType = Boolean.class)
+    String getHostAwarePartitioning();
+    public void setHostAwarePartitioning(String value);
+
+    @Attribute(defaultValue = "4")
+    String getExecutorPoolSize();
+    public void setExecutorPoolSize(String value);
     
+    @Attribute(defaultValue = "20")
+    String getExecutorQueueCapacity();
+    public void setExecutorQueueCapacity(String value);
+    
+    @Attribute(defaultValue = "4")
+    String getScheduledExecutorPoolSize();
+    public void setScheduledExecutorPoolSize(String value);
+    
+    @Attribute(defaultValue = "20")
+    String getScheduledExecutorQueueCapacity();
+    public void setScheduledExecutorQueueCapacity(String value);
+
     @Attribute(defaultValue = "")
     String getLicenseKey();
     public void setLicenseKey(String value);

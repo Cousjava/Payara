@@ -37,8 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-
-// Portions Copyright [2014-2015] [C2B2 Consulting Limited]
+// Portions Copyright [2016-2017] [Payara Foundation and/or its affiliates]
 
 package com.sun.enterprise.server.logging;
 
@@ -90,6 +89,8 @@ import com.sun.enterprise.module.bootstrap.EarlyLogHandler;
 import com.sun.enterprise.util.LocalStringManagerImpl;
 import com.sun.enterprise.util.io.FileUtils;
 import com.sun.enterprise.v3.logging.AgentFormatterDelegate;
+import java.io.FileInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * GFFileHandler publishes formatted log Messages to a FILE.
@@ -114,7 +115,7 @@ PostConstruct, PreDestroy, LogEventBroadcaster, LoggingRuntime {
     ServerContext serverContext;
 
     @Inject
-    ServerEnvironmentImpl env;
+    protected ServerEnvironmentImpl env;
 
     @Inject @Optional
     Agent agent;
@@ -126,9 +127,11 @@ PostConstruct, PreDestroy, LogEventBroadcaster, LoggingRuntime {
     // written out to the stream
     private MeteredStream meter;
 
-    private static final String LOGS_DIR = "logs";
+    protected static final String LOGS_DIR = "logs";
     private static final String LOG_FILE_NAME = "server.log";
-    
+
+    private static final String GZIP_EXTENSION = ".gz";
+
     private String absoluteServerLogName = null;
 
     private File absoluteFile = null;
@@ -171,6 +174,7 @@ PostConstruct, PreDestroy, LogEventBroadcaster, LoggingRuntime {
     private Thread pump;
 
     boolean dayBasedFileRotation = false;
+    boolean compressLogs = false;
 
     private String RECORD_BEGIN_MARKER = "[#|";
     private String RECORD_END_MARKER = "|#]";
@@ -191,13 +195,7 @@ PostConstruct, PreDestroy, LogEventBroadcaster, LoggingRuntime {
         LogManager manager = LogManager.getLogManager();
         String cname = getClass().getName();
 
-        logFileProperty = manager.getProperty(cname + ".file");
-        if(logFileProperty==null || logFileProperty.trim().equals("")) {
-            logFileProperty = env.getInstanceRoot().getAbsolutePath() + File.separator + LOGS_DIR + File.separator +
-                    LOG_FILE_NAME;
-        }
-
-        String filename = TranslatedConfigView.getTranslatedValue(logFileProperty).toString();
+        String filename = evaluateFileName();
 
         File serverLog = new File(filename);
         absoluteServerLogName = filename;
@@ -382,6 +380,32 @@ PostConstruct, PreDestroy, LogEventBroadcaster, LoggingRuntime {
         if (flushFrequency <= 0)
             flushFrequency = 1;
 
+        propValue = manager.getProperty(cname + ".maxHistoryFiles");
+        try {
+            if (propValue != null) {
+                maxHistoryFiles = Integer.parseInt(propValue);
+            }
+        } catch (NumberFormatException e) {
+            lr = new LogRecord(Level.WARNING, LogFacade.INVALID_ATTRIBUTE_VALUE);
+            lr.setParameters(new Object[]{propValue, "maxHistoryFiles"});
+            lr.setResourceBundle(ResourceBundle.getBundle(LogFacade.LOGGING_RB_NAME));
+            lr.setThreadID((int) Thread.currentThread().getId());
+            lr.setLoggerName(LogFacade.LOGGING_LOGGER_NAME);
+            EarlyLogHandler.earlyMessages.add(lr);
+        }
+
+        if (maxHistoryFiles < 0)
+            maxHistoryFiles = 10;
+
+        propValue = manager.getProperty(cname + ".compressOnRotation");
+        boolean compressionOnRotation = false;
+        if (propValue != null) {
+            compressionOnRotation = Boolean.parseBoolean(propValue);
+        }
+        if (compressionOnRotation) {
+            compressLogs = true;
+        }
+
         String formatterName = manager.getProperty(cname + ".formatter");
         formatterName = (formatterName == null) ? DEFAULT_LOG_FILE_FORMATTER_CLASS_NAME : formatterName; 
         
@@ -390,7 +414,7 @@ PostConstruct, PreDestroy, LogEventBroadcaster, LoggingRuntime {
         gffileHandlerFormatter = formatterName;
         if (mustRotate) {
             rotate();
-        } else if (gffileHandlerFormatter != null 
+        } else if (gffileHandlerFormatter != null
                 && !gffileHandlerFormatter
                         .equals(currentgffileHandlerFormatter)) {
             rotate();
@@ -432,24 +456,19 @@ PostConstruct, PreDestroy, LogEventBroadcaster, LoggingRuntime {
         lr.setThreadID((int) Thread.currentThread().getId());
         lr.setLoggerName(LogFacade.LOGGING_LOGGER_NAME);
         EarlyLogHandler.earlyMessages.add(lr);
-        
-        propValue = manager.getProperty(cname + ".maxHistoryFiles");
-        try {
-            if (propValue != null) {
-                maxHistoryFiles = Integer.parseInt(propValue);
-            }
-        } catch (NumberFormatException e) {
-            lr = new LogRecord(Level.WARNING, LogFacade.INVALID_ATTRIBUTE_VALUE);
-            lr.setParameters(new Object[]{propValue, "maxHistoryFiles"});
-            lr.setResourceBundle(ResourceBundle.getBundle(LogFacade.LOGGING_RB_NAME));
-            lr.setThreadID((int) Thread.currentThread().getId());
-            lr.setLoggerName(LogFacade.LOGGING_LOGGER_NAME);
-            EarlyLogHandler.earlyMessages.add(lr);
-        }
-        
-        if (maxHistoryFiles < 0)
-            maxHistoryFiles = 10;
+    }
 
+    protected String evaluateFileName() {
+        String cname = getClass().getName();
+        LogManager manager = LogManager.getLogManager();
+
+        logFileProperty = manager.getProperty(cname + ".file");
+        if(logFileProperty==null || logFileProperty.trim().equals("")) {
+            logFileProperty = env.getInstanceRoot().getAbsolutePath() + File.separator + LOGS_DIR + File.separator +
+                    LOG_FILE_NAME;
+        }
+
+        return TranslatedConfigView.getTranslatedValue(logFileProperty).toString();
     }
 
     Formatter findFormatterService(String formatterName) {
@@ -804,6 +823,20 @@ PostConstruct, PreDestroy, LogEventBroadcaster, LoggingRuntime {
                                                 .restartTimer();
                                     }
 
+                                    if (compressLogs) {
+                                        boolean compressed = gzipFile(rotatedFile);
+                                        if (compressed) {
+                                            boolean deleted = rotatedFile.delete();
+                                            if (!deleted) {
+                                                 throw new IOException("Could not delete uncompressed log file: "
+                                                        + rotatedFile.getAbsolutePath());
+                                            }
+                                        } else {
+                                            throw new IOException("Could not compress log file: "
+                                                    + rotatedFile.getAbsolutePath());
+                                        }
+                                    }
+
                                     cleanUpHistoryLogFiles();                                    
                                 }
                             } catch (IOException ix) {
@@ -930,5 +963,29 @@ PostConstruct, PreDestroy, LogEventBroadcaster, LoggingRuntime {
         }
     }
 
+    private boolean gzipFile(File infile) {
+
+        boolean status = false;
+
+        try (
+            FileInputStream  fis  = new FileInputStream(infile);
+            FileOutputStream fos  = new FileOutputStream(infile.getCanonicalPath() + GZIP_EXTENSION);
+            GZIPOutputStream gzos = new GZIPOutputStream(fos);
+        ) {
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len=fis.read(buffer)) != -1 ) {
+                gzos.write(buffer, 0, len);
+            }
+            gzos.finish();
+
+            status = true;
+
+        } catch (IOException ix) {
+            new ErrorManager().error("Error gzipping log file", ix, ErrorManager.GENERIC_FAILURE);
+        }
+
+        return status;
+    }
 }
 

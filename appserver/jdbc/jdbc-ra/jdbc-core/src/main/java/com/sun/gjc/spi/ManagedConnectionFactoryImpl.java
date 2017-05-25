@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 1997-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997-2016 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2015] [C2B2 Consulting Limited and/or its affiliates]
+// Portions Copyright [2016] [Payara Foundation and/or its affiliates]
 package com.sun.gjc.spi;
 
 import com.sun.appserv.connectors.internal.spi.MCFLifecycleListener;
@@ -345,10 +345,16 @@ public abstract class ManagedConnectionFactoryImpl implements javax.resource.spi
                     + "the connection is null");
         }
         
+        // The timeout defaults to -1, which isn't actually a valid setting for the timeout
+        int statementTimeout = Integer.valueOf(getStatementTimeout());
+        if (statementTimeout == -1) {
+            statementTimeout = 0;
+        }
+        
         try {
             Class validationClass = Thread.currentThread().getContextClassLoader().loadClass(validationClassName);
             ConnectionValidation valClass = (ConnectionValidation) validationClass.newInstance();
-            isValid = valClass.isConnectionValid(con);
+            isValid = valClass.isConnectionValid(con, statementTimeout);
         } catch (Exception e) {
             _logger.log(Level.INFO, "jdbc.exc_custom_validation", validationClassName);
             throw new ResourceException(e);
@@ -437,9 +443,18 @@ public abstract class ManagedConnectionFactoryImpl implements javax.resource.spi
 
         java.sql.PreparedStatement stmt = null;
         java.sql.ResultSet rs = null;
+        
+        final String statement = "SELECT COUNT(*) FROM " + tableName;
+        int statementTimeout = Integer.valueOf(getStatementTimeout());
+        
+        // The timeout defaults to -1, which isn't actually a valid setting for the timeout
+        if (statementTimeout == -1) {
+            statementTimeout = 0;
+        }
+        
         try {
-            final String statement = "SELECT COUNT(*) FROM " + tableName;
             stmt = con.prepareStatement(statement);
+            stmt.setQueryTimeout(statementTimeout);
             rs = stmt.executeQuery();
         } catch (Exception sqle) {
             _logger.log(Level.INFO, "jdbc.exc_table_validation", tableName);
@@ -657,7 +672,7 @@ public abstract class ManagedConnectionFactoryImpl implements javax.resource.spi
         String cacheSize = getStatementCacheSize();
         if(cacheSize != null){
             try{
-                statementCacheSize = Integer.valueOf(cacheSize);
+                statementCacheSize = Integer.parseInt(cacheSize);
                 //TODO-SC FINE log-level with Pool Name (if possible)
                 if(_logger.isLoggable(Level.FINE)) {
                     _logger.log(Level.FINE, "StatementCaching Size : " + statementCacheSize);
@@ -1497,7 +1512,7 @@ public abstract class ManagedConnectionFactoryImpl implements javax.resource.spi
         String stmtLeakTimeout = getStatementLeakTimeoutInSeconds();
         String stmtLeakReclaim = getStatementLeakReclaim();
         if (stmtLeakTimeout != null) {
-            statementLeakTimeout = Integer.valueOf(stmtLeakTimeout) * 1000L;
+            statementLeakTimeout = Integer.parseInt(stmtLeakTimeout) * 1000L;
             statementLeakReclaim = Boolean.valueOf(stmtLeakReclaim);
             if (_logger.isLoggable(Level.FINE)) {
                 _logger.log(Level.FINE, "StatementLeakTimeout in seconds: "

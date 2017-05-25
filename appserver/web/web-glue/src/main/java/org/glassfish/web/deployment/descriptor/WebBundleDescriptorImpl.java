@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 1997-2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2014-2016] [C2B2 Consulting Limited and/or its affiliates]
+// Portions Copyright [2014-2016] [Payara Foundation and/or its affiliates]
 
 package org.glassfish.web.deployment.descriptor;
 
@@ -103,7 +103,7 @@ public class WebBundleDescriptorImpl extends WebBundleDescriptor {
             entityManagerReferences =
             new HashSet<EntityManagerReferenceDescriptor>();
 
-    private Boolean isDistributable;
+    private boolean distributable = false;
     private boolean denyUncoveredHttpMethods = false;
     private Set<SecurityRoleDescriptor> securityRoles;
     private Set<SecurityConstraint> securityConstraints;
@@ -137,6 +137,7 @@ public class WebBundleDescriptorImpl extends WebBundleDescriptor {
     private int servletReloadCheckSecs = 1;
 
     private Set<String> conflictedMimeMappingExtensions = null;
+    private boolean servletInitializersEnabled = true;
 
     /**
      * Constrct an empty web app [{0}].
@@ -158,20 +159,21 @@ public class WebBundleDescriptorImpl extends WebBundleDescriptor {
      */
     public void addWebBundleDescriptor(WebBundleDescriptor webBundleDescriptor) {
         getWelcomeFilesSet().addAll(webBundleDescriptor.getWelcomeFilesSet());
-        addCommonWebBundleDescriptor(webBundleDescriptor);
+        addCommonWebBundleDescriptor(webBundleDescriptor, false);
     }
 
     public void addDefaultWebBundleDescriptor(WebBundleDescriptor webBundleDescriptor) {
         if (getWelcomeFilesSet().size() == 0) {
             getWelcomeFilesSet().addAll(webBundleDescriptor.getWelcomeFilesSet());
         }
-        addCommonWebBundleDescriptor(webBundleDescriptor);
+        addCommonWebBundleDescriptor(webBundleDescriptor, true);
     }
 
     /**
      * This method combines all except welcome file set for two webBundleDescriptors.
      */
-    private void addCommonWebBundleDescriptor(WebBundleDescriptor wbd) {
+    private void addCommonWebBundleDescriptor(WebBundleDescriptor wbd,
+            boolean defaultDescriptor) {
         super.addBundleDescriptor(wbd);
 
         WebBundleDescriptorImpl webBundleDescriptor = (WebBundleDescriptorImpl) wbd;
@@ -260,17 +262,16 @@ public class WebBundleDescriptorImpl extends WebBundleDescriptor {
         // combine login config with conflict resolution check
         combineLoginConfiguration(webBundleDescriptor);
 
-        Boolean otherIsDistributable = webBundleDescriptor.isDistributable();
-        if (otherIsDistributable != null && webBundleDescriptor.isExists()) {
-            // the only way distributable is true is when
-            // all of it's web fragments are true
-            // The Servlet spec (section 8.2.3):
-            if (isDistributable != null) {
-                setDistributable(isDistributable && otherIsDistributable);
-            } else {
-                setDistributable(otherIsDistributable);
+        if (!defaultDescriptor) {
+            if (webBundleDescriptor.isExists()) {
+                boolean otherDistributable = webBundleDescriptor.isDistributable();
+                // the only way distributable is true is when
+                // all of it's web fragments are true
+                // The Servlet spec (section 8.2.3):
+                setDistributable(distributable && otherDistributable);
             }
         }
+
         combinePostConstructDescriptors(webBundleDescriptor);
         combinePreDestroyDescriptors(webBundleDescriptor);
         addJndiNameEnvironment(webBundleDescriptor);
@@ -390,7 +391,15 @@ public class WebBundleDescriptorImpl extends WebBundleDescriptor {
         String name = webComponentDescriptor.getCanonicalName();
         WebComponentDescriptor webCompDesc = getWebComponentByCanonicalName(name);
 
-        if (webCompDesc != null) {
+        if (webCompDesc != null && webCompDesc instanceof WebComponentDescriptorStub) {
+            // urlPattern from fragment is overridden by web.xml
+            resultDesc = webComponentDescriptor;
+            resultDesc.getUrlPatternsSet().clear();
+            resultDesc.getUrlPatternsSet().addAll(webCompDesc.getUrlPatternsSet());
+            removeWebComponentDescriptor(webCompDesc);
+            addWebComponentDescriptor(resultDesc);
+        }
+        else if(webCompDesc != null) {
             // Servlet defined in web.xml
             resultDesc = webCompDesc;
             if (!webCompDesc.isConflict(webComponentDescriptor, true)) {
@@ -815,15 +824,15 @@ public class WebBundleDescriptorImpl extends WebBundleDescriptor {
      * Return true if this web app [{0}] can be distributed across different processes.
      */
 
-    public Boolean isDistributable() {
-        return isDistributable;
+    public boolean isDistributable() {
+        return distributable;
     }
 
     /**
      * Sets whether this web app [{0}] can be distributed across different processes.
      */
-    public void setDistributable(Boolean isDistributable) {
-        this.isDistributable = isDistributable;
+    public void setDistributable(boolean distributable) {
+        this.distributable = distributable;
     }
 
     /**
@@ -2121,7 +2130,7 @@ public class WebBundleDescriptorImpl extends WebBundleDescriptor {
         toStringBuffer.append("\n serviceReferences ");
         if (serviceReferences != null)
             printDescriptorSet(serviceReferences, toStringBuffer);
-        toStringBuffer.append("\n isDistributable ").append(isDistributable);
+        toStringBuffer.append("\n distributable ").append(distributable);
         toStringBuffer.append("\n denyUncoveredHttpMethods ").append(denyUncoveredHttpMethods);
         toStringBuffer.append("\n securityRoles ").append(securityRoles);
         toStringBuffer.append("\n securityConstraints ").append(securityConstraints);
@@ -2223,6 +2232,16 @@ public class WebBundleDescriptorImpl extends WebBundleDescriptor {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public boolean getServletInitializersEnabled() {
+        return servletInitializersEnabled;
+    }
+
+    @Override
+    public void setServletInitializersEnabled(boolean tf) {
+        servletInitializersEnabled = tf;
     }
 
     private static final class ServletFilterMappingInfo {

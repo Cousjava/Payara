@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2016] [C2B2 Consulting Limited and/or its affiliates]
+// Portions Copyright [2016-2017] [Payara Foundation and/or its affiliates]
 
 package org.glassfish.weld;
 
@@ -97,6 +97,7 @@ import com.sun.enterprise.deployment.WebBundleDescriptor;
 import com.sun.enterprise.deployment.web.ServletFilterMapping;
 import org.glassfish.web.deployment.descriptor.ServletFilterDescriptor;
 import org.glassfish.web.deployment.descriptor.ServletFilterMappingDescriptor;
+import org.jboss.weld.configuration.spi.ExternalConfiguration;
 import org.jboss.weld.resources.spi.ResourceLoader;
 
 @Service
@@ -217,7 +218,7 @@ public class WeldDeployer extends SimpleDeployer<WeldContainer, WeldApplicationC
                 });
                 try {
                     bootstrap.startExtensions(deploymentImpl.getExtensions());
-                    bootstrap.startContainer(fAppName, Environments.SERVLET, deploymentImpl/*, new ConcurrentHashMapBeanStore()*/);
+                    bootstrap.startContainer(deploymentImpl.getAppName() + ".bda", Environments.SERVLET, deploymentImpl/*, new ConcurrentHashMapBeanStore()*/);
                     bootstrap.startInitialization();
                     fireProcessInjectionTargetEvents(bootstrap, deploymentImpl);
                     bootstrap.deployBeans();
@@ -469,9 +470,19 @@ public class WeldDeployer extends SimpleDeployer<WeldContainer, WeldApplicationC
         }
 
         // Create a Deployment Collecting Information From The ReadableArchive (archive)
+        // if archive is a composite, or has version numbers per maven conventions, strip it out
+        boolean isSubArchive = archive.getParentArchive() != null;
+        String archiveName = !isSubArchive? appInfo.getName() : archive.getName();
+        if(isSubArchive) {
+            archiveName = BeanDeploymentArchiveImpl.stripMavenVersion(archiveName);
+        }
+        if(!context.getArchiveHandler().getArchiveType().isEmpty()) {
+            archiveName = String.format("%s.%s", archiveName, context.getArchiveHandler().getArchiveType());
+        }
+        
         DeploymentImpl deploymentImpl = context.getTransientAppMetaData(WELD_DEPLOYMENT, DeploymentImpl.class);
         if (deploymentImpl == null) {
-            deploymentImpl = new DeploymentImpl(archive, ejbs, context, archiveFactory);
+            deploymentImpl = new DeploymentImpl(archive, ejbs, context, archiveFactory, archiveName);
 
             // Add services
             TransactionServices transactionServices = new TransactionServicesImpl(services);
@@ -488,7 +499,7 @@ public class WeldDeployer extends SimpleDeployer<WeldContainer, WeldApplicationC
 
             addWeldListenerToAllWars(context);
         } else {
-            deploymentImpl.scanArchive(archive, ejbs, context);
+            deploymentImpl.scanArchive(archive, ejbs, context, archiveName);
         }
         deploymentImpl.addDeployedEjbs(ejbs);
 
@@ -497,8 +508,12 @@ public class WeldDeployer extends SimpleDeployer<WeldContainer, WeldApplicationC
             deploymentImpl.getServices().add(EjbServices.class, ejbServices);
         }
 
+        DeployCommandParameters dc = context.getCommandParameters(DeployCommandParameters.class);
+        deploymentImpl.getServices().add(ExternalConfiguration.class,
+                new ExternalConfigurationImpl(System.getProperty("fish.payara.rollingUpgradesDelimiter", ":"),
+                dc != null? !dc.isAvailabilityEnabled() : true));
 
-        BeanDeploymentArchive bda = deploymentImpl.getBeanDeploymentArchiveForArchive(archive.getName());
+        BeanDeploymentArchive bda = deploymentImpl.getBeanDeploymentArchiveForArchive(archiveName);
         if (bda != null && !bda.getBeansXml().getBeanDiscoveryMode().equals(BeanDiscoveryMode.NONE)) {
 
             WebBundleDescriptor wDesc = context.getModuleMetaData(WebBundleDescriptor.class);
@@ -543,6 +558,8 @@ public class WeldDeployer extends SimpleDeployer<WeldContainer, WeldApplicationC
 
                     InjectionManager injectionMgr = services.getService(InjectionManager.class);
                     InjectionServices injectionServices = new InjectionServicesImpl(injectionMgr, bundle, deploymentImpl);
+                    // Add service
+                    deploymentImpl.getServices().add(InjectionServices.class, injectionServices);
 
                     if (logger.isLoggable(Level.FINE)) {
                         logger.log(Level.FINE,
@@ -627,5 +644,4 @@ public class WeldDeployer extends SimpleDeployer<WeldContainer, WeldApplicationC
         InjectionServices injectionServices = new NonModuleInjectionServices(injectionMgr);
         bda.getServices().add(InjectionServices.class, injectionServices);
     }
-
 }

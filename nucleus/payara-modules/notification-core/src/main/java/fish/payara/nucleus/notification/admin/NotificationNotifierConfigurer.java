@@ -2,7 +2,7 @@
 
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2016 C2B2 Consulting Limited. All rights reserved.
+ Copyright (c) 2016 Payara Foundation. All rights reserved.
 
  The contents of this file are subject to the terms of the Common Development
  and Distribution License("CDDL") (collectively, the "License").  You
@@ -25,8 +25,9 @@ import fish.payara.nucleus.notification.NotificationEventBus;
 import fish.payara.nucleus.notification.NotificationService;
 import fish.payara.nucleus.notification.configuration.NotificationServiceConfiguration;
 import fish.payara.nucleus.notification.configuration.NotifierConfiguration;
-import fish.payara.nucleus.notification.domain.execoptions.NotifierConfigurationExecutionOptions;
-import fish.payara.nucleus.notification.domain.execoptions.NotifierConfigurationExecutionOptionsFactory;
+import fish.payara.nucleus.notification.configuration.NotifierConfigurationType;
+import fish.payara.nucleus.notification.domain.NotifierConfigurationExecutionOptions;
+import fish.payara.nucleus.notification.service.NotifierConfigurationExecutionOptionsFactoryStore;
 import fish.payara.nucleus.notification.service.BaseNotifierService;
 import org.glassfish.api.ActionReport;
 import org.glassfish.api.I18n;
@@ -39,12 +40,13 @@ import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.internal.api.Target;
 import org.jvnet.hk2.annotations.Service;
 import org.jvnet.hk2.config.ConfigSupport;
+import org.jvnet.hk2.config.ConfigView;
 import org.jvnet.hk2.config.SingleConfigCode;
 import org.jvnet.hk2.config.TransactionFailure;
 
 import javax.inject.Inject;
 import java.beans.PropertyVetoException;
-import java.util.List;
+import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -54,24 +56,28 @@ import java.util.logging.Logger;
  *
  * @author mertcaliskan
  */
-@ExecuteOn({RuntimeType.DAS})
+@ExecuteOn({RuntimeType.DAS, RuntimeType.INSTANCE})
 @TargetType(value = {CommandTarget.DAS, CommandTarget.STANDALONE_INSTANCE, CommandTarget.CLUSTER, CommandTarget.CLUSTERED_INSTANCE, CommandTarget.CONFIG})
 @Service(name = "notification-configure-notifier")
 @CommandLock(CommandLock.LockType.NONE)
 @PerLookup
 @I18n("notification.configure.notifier")
 @RestEndpoints({
-    @RestEndpoint(configBean = Domain.class,
+    @RestEndpoint(configBean = NotificationServiceConfiguration.class,
             opType = RestEndpoint.OpType.POST,
             path = "notification-configure-notifier",
             description = "Enables/Disables Notifier Specified With Name")
 })
+@Deprecated
 public class NotificationNotifierConfigurer implements AdminCommand {
 
     final private static LocalStringManagerImpl strings = new LocalStringManagerImpl(NotificationNotifierConfigurer.class);
 
     @Inject
     NotificationService service;
+
+    @Inject
+    ServerEnvironment server;
 
     @Inject
     ServiceLocator habitat;
@@ -81,9 +87,6 @@ public class NotificationNotifierConfigurer implements AdminCommand {
 
     @Inject
     protected Target targetUtil;
-
-    @Inject
-    private NotifierConfigurationExecutionOptionsFactory factory;
 
     @Inject
     private NotificationEventBus eventBus;
@@ -102,6 +105,9 @@ public class NotificationNotifierConfigurer implements AdminCommand {
 
     @Inject
     ServiceLocator serviceLocator;
+
+    @Inject
+    NotifierConfigurationExecutionOptionsFactoryStore factoryStore;
 
     @Override
     public void execute(AdminCommandContext context) {
@@ -137,6 +143,7 @@ public class NotificationNotifierConfigurer implements AdminCommand {
                         if (notifierEnabled != null) {
                             notifierProxy.enabled(notifierEnabled);
                         }
+                        notificationServiceConfigurationProxy.getNotifierConfigurationList().add(notifierProxy);
                         actionReport.setActionExitCode(ActionReport.ExitCode.SUCCESS);
                         return notificationServiceConfigurationProxy;
                     }
@@ -157,39 +164,40 @@ public class NotificationNotifierConfigurer implements AdminCommand {
             }
             
             if (dynamic) {
-                enableOnTarget(actionReport, theContext, notifierEnabled);
+                NotifierConfiguration dynamicNotifier = notificationServiceConfiguration.getNotifierConfigurationByType(notifierService.getNotifierConfigType());
+                ConfigView view = ConfigSupport.getImpl(dynamicNotifier);
+                NotifierConfigurationType annotation = view.getProxyType().getAnnotation(NotifierConfigurationType.class);
+                NotifierConfigurationExecutionOptions build = factoryStore.get(annotation.type()).build(dynamicNotifier);
+
+                if (server.isDas()) {
+                    if (targetUtil.getConfig(target).isDas()) {
+                        if (notifierEnabled) {
+                            build.setEnabled(true);
+                            service.getExecutionOptions().addNotifierConfigurationExecutionOption(build);
+                            eventBus.register(notifierService);
+                        } else {
+                            service.getExecutionOptions().removeNotifierConfigurationExecutionOption(build);
+                            eventBus.unregister(notifierService);
+                        }                       
+                    }
+                } else {
+                        if (notifierEnabled) {
+                            build.setEnabled(true);
+                            service.getExecutionOptions().addNotifierConfigurationExecutionOption(build);
+                            eventBus.register(notifierService);
+                        } else {
+                            service.getExecutionOptions().removeNotifierConfigurationExecutionOption(build);
+                            eventBus.unregister(notifierService);
+                        }                       
+                }
             }
 
             actionReport.appendMessage(strings.getLocalString("notification.configure.notifier.added.configured",
                     "Notifier with name {0} is registered and set enabled to {1}.", notifierName, notifierEnabled) + "\n");
-        } catch (TransactionFailure ex) {
+        } catch (TransactionFailure | UnsupportedEncodingException ex) {
             logger.log(Level.WARNING, "Exception during command ", ex);
             actionReport.setMessage(ex.getCause().getMessage());
             actionReport.setActionExitCode(ActionReport.ExitCode.FAILURE);
         }
-    }
-
-    private void enableOnTarget(ActionReport actionReport, AdminCommandContext context, Boolean enabled) {
-        CommandRunner runner = serviceLocator.getService(CommandRunner.class);
-        ActionReport subReport = context.getActionReport().addSubActionsReport();
-        CommandRunner.CommandInvocation inv;
-
-        if (target.equals("server-config")) {
-            inv = runner.getCommandInvocation("__enable-notification-configure-notifier-das", subReport, context.getSubject());
-        } else {
-            inv = runner.getCommandInvocation("__enable-notification-configure-notifier-instance", subReport, context.getSubject());
-        }
-
-        ParameterMap params = new ParameterMap();
-        params.add("notifierEnabled", enabled.toString());
-        params.add("target", target);
-        params.add("notifierName", notifierName);
-        inv.parameters(params);
-        inv.execute();
-        // swallow the offline warning as it is not a problem
-        if (subReport.hasWarnings()) {
-            subReport.setMessage("");
-        }
-
     }
 }

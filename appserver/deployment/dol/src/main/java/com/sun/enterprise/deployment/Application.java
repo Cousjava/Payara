@@ -37,10 +37,13 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2016] [C2B2 Consulting Limited and/or its affiliates]
+// Portions Copyright [2016] [Payara Foundation and/or its affiliates]
 
 package com.sun.enterprise.deployment;
 
+import com.google.common.base.Function;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableSet;
 import com.sun.enterprise.deployment.node.ApplicationNode;
 import com.sun.enterprise.deployment.runtime.application.wls.ApplicationParam;
 import com.sun.enterprise.deployment.runtime.common.SecurityRoleMapping;
@@ -56,6 +59,7 @@ import com.sun.enterprise.deployment.util.ApplicationVisitor;
 import com.sun.enterprise.deployment.util.ComponentVisitor;
 import com.sun.enterprise.deployment.util.DOLUtils;
 import com.sun.enterprise.util.LocalStringManagerImpl;
+import com.sun.enterprise.util.StringUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -76,6 +80,7 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.persistence.EntityManagerFactory;
 import org.glassfish.api.deployment.archive.ArchiveType;
@@ -110,6 +115,7 @@ public class Application extends CommonResourceBundleDescriptor
     private static final String LIBRARY_DIRECTORY_DEFAULT_VALUE = "lib";
 
     private static final String PERSISTENCE_UNIT_NAME_SEPARATOR = "#";
+    private static final String ROLLING_UPGRADES_ID_DELIMITER = System.getProperty("org.jboss.weld.clustering.rollingUpgradesIdDelimiter", "..");
 
     /**
      * Store generated XML dir to be able to get the generated WSDL
@@ -166,6 +172,10 @@ public class Application extends CommonResourceBundleDescriptor
     private String compatValue;
     
     private String classLoadingDelegate;
+    private final List<Pattern> scanningInclusions = new ArrayList<>();
+    private final List<Pattern> scanningExclusions = new ArrayList<>();
+    private final Set<String> whitelistPackages = new HashSet<>();
+
 
     private boolean initializeInOrder = false;
 
@@ -722,6 +732,44 @@ public class Application extends CommonResourceBundleDescriptor
 
     public void setClassLoadingDelegate(String classLoadingDelegate) {
         this.classLoadingDelegate = classLoadingDelegate;
+    }
+
+    public List<Pattern> getScanningExclusions() {
+        return scanningExclusions;
+    }
+
+    public List<Pattern> getScanningInclusions() {
+        return scanningInclusions;
+    }
+
+    public void addScanningInclusions(List<String> inclusions) {
+        addScanningInclusions(inclusions, getLibraryDirectory());
+    }
+
+    public void addScanningInclusions(List<String> inclusions, String libDir) {
+        this.scanningInclusions.addAll(FluentIterable.from(inclusions)
+                .transform(new WildcardToRegex(libDir)).toList());
+    }
+
+    public void addScanningExclusions(List<String> exclusions) {
+        addScanningExclusions(exclusions, getLibraryDirectory());
+    }
+
+    public void addScanningExclusions(List<String> exclusions, String libDir) {
+        this.scanningExclusions.addAll(FluentIterable.from(exclusions)
+                .transform(new WildcardToRegex(libDir)).toList());
+    }
+
+    public boolean isWhitelistEnabled() {
+        return !whitelistPackages.isEmpty();
+    }
+
+    public Set<String> getWhitelistPackages() {
+        return ImmutableSet.copyOf(whitelistPackages);
+    }
+
+    public void addWhitelistPackage(String aPackage) {
+        whitelistPackages.add(aPackage);
     }
 
     /**
@@ -1333,9 +1381,9 @@ public class Application extends CommonResourceBundleDescriptor
         for (int i = 0; i < descs.length; i++) {
             // Maximum of 2^16 beans max per application
             String module = descs[i].getEjbBundleDescriptor().getModuleDescriptor().getArchiveUri();
-            long uid = Math.abs(UUID.nameUUIDFromBytes((module.replaceFirst("\\..*", "")
+            long uid = Math.abs(UUID.nameUUIDFromBytes((module.replaceFirst(Pattern.quote(ROLLING_UPGRADES_ID_DELIMITER) + ".*$", "")
                     + descs[i].getName()).getBytes()).getLeastSignificantBits() % 65536);
-            // in case of an id collision, increment until find empty elot
+            // in case of an id collision, increment until find empty slot
             while(uniqueIds.contains(uid)) {
                 uid = ++uid % 65536;
             }
@@ -1667,5 +1715,24 @@ public class Application extends CommonResourceBundleDescriptor
      */
     public void setKeepStateResolved(String keepStateResolved) {
         this.keepStateResolved = Boolean.valueOf(keepStateResolved);
+    }
+
+
+    private static class WildcardToRegex implements Function<String, Pattern> {
+        public WildcardToRegex(String libDir) {
+            this.libDir = libDir;
+        }
+
+        @Override
+        public Pattern apply(String input) {
+            input = input.replaceAll("(\\?|\\*)", ".$1");
+            input = input.replaceFirst("\\.jar$", "");
+            if(StringUtils.ok(libDir)) {
+                input = String.format("^%s/%s(-.*)?\\.jar$", libDir, input);
+            }
+            return Pattern.compile(input, Pattern.CASE_INSENSITIVE);
+        }
+
+        private final String libDir;
     }
 }

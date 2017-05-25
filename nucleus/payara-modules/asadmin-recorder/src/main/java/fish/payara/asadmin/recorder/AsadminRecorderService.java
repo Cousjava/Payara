@@ -1,7 +1,7 @@
 /**
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
- * Copyright (c) 2016 C2B2 Consulting Limited and/or its affiliates.
+ * Copyright (c) 2016 Payara Foundation and/or its affiliates.
  * All rights reserved.
  *
  * The contents of this file are subject to the terms of the Common Development
@@ -17,6 +17,7 @@
  */
 package fish.payara.asadmin.recorder;
 
+import java.beans.PropertyVetoException;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -36,9 +37,13 @@ import org.glassfish.api.admin.ParameterMap;
 import org.glassfish.api.admin.ServerEnvironment;
 import org.glassfish.api.event.EventListener;
 import org.glassfish.api.event.Events;
+import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.runlevel.RunLevel;
 import org.jvnet.hk2.annotations.Optional;
 import org.jvnet.hk2.annotations.Service;
+import org.jvnet.hk2.config.ConfigSupport;
+import org.jvnet.hk2.config.SingleConfigCode;
+import org.jvnet.hk2.config.TransactionFailure;
 
 /**
  *
@@ -56,11 +61,15 @@ public class AsadminRecorderService implements EventListener {
     AsadminRecorderConfiguration asadminRecorderConfiguration;
     
     @Inject
-    Events events; 
+    Events events;
+    
+    @Inject
+    ServiceLocator habitat;
     
     @PostConstruct
     void postConstruct() {
         events.register(this);
+        asadminRecorderConfiguration = habitat.getService(AsadminRecorderConfiguration.class);
     }
     
     @Override
@@ -103,7 +112,7 @@ public class AsadminRecorderService implements EventListener {
                             + "found, it is likely missing from the domain.xml."
                             + " Setting enabled to default of false");
         } else {
-            enabled = asadminRecorderConfiguration.isEnabled();
+            enabled = Boolean.parseBoolean(asadminRecorderConfiguration.isEnabled());
         }
         return enabled;
     }
@@ -123,7 +132,7 @@ public class AsadminRecorderService implements EventListener {
             splitFilteredCommands();
         }
         
-        if (asadminRecorderConfiguration.filterCommands()) {
+        if (Boolean.parseBoolean(asadminRecorderConfiguration.filterCommands())) {
             if (!(filteredCommands.contains(commandName))) {
                 boolean regexMatched = false;
                 

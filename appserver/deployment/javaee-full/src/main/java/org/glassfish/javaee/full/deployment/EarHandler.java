@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2016] [C2B2 Consulting Limited and/or its affiliates]
+// Portions Copyright [2016] [Payara Foundation and/or its affiliates]
 
 package org.glassfish.javaee.full.deployment;
 
@@ -303,7 +303,7 @@ public class EarHandler extends AbstractArchiveHandler implements CompositeHandl
     public ClassLoader getClassLoader(final ClassLoader parent, DeploymentContext context) {
         final ReadableArchive archive  = context.getSource();
         
-        ApplicationHolder holder =
+        final ApplicationHolder holder =
             getApplicationHolder(archive, context, true);
 
         // the ear classloader hierachy will be 
@@ -386,7 +386,7 @@ public class EarHandler extends AbstractArchiveHandler implements CompositeHandl
             cl =  AccessController.doPrivileged(new PrivilegedAction<EarClassLoader>() {
                 @Override
                 public EarClassLoader run() {
-                    return new EarClassLoader(embeddedConnCl);
+                    return new EarClassLoader(embeddedConnCl, holder.app);
                 }
             });
 
@@ -583,12 +583,9 @@ public class EarHandler extends AbstractArchiveHandler implements CompositeHandl
 
                 holder = new ApplicationHolder(archivist.createApplication(
                     source, isDirectory));
-                if(context.getAppProps().containsKey(RuntimeTagNames.IMPLICIT_CDI_ENABLED_PROP) 
-                        == false) { // don't override existing setting (from cmd line, GUI, etc.)
-                    Boolean cdiEnabled = new GFApplicationXmlParser(source).isEnableImplicitCDI();
-                    if(cdiEnabled != null) {
-                        context.getAppProps().put(RuntimeTagNames.IMPLICIT_CDI_ENABLED_PROP, cdiEnabled.toString().toLowerCase());
-                    }
+                Boolean cdiEnabled = new GFApplicationXmlParser(source).isEnableImplicitCDI();
+                if(cdiEnabled != null) {
+                    context.getAppProps().put(RuntimeTagNames.PAYARA_ENABLE_IMPLICIT_CDI, cdiEnabled.toString().toLowerCase());
                 }
                 _logger.fine("time to read application.xml " + (System.currentTimeMillis() - start));
             } catch (IOException | XMLStreamException | SAXParseException e) {

@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2016] [C2B2 Consulting Limited and/or its affiliates]
+// Portions Copyright [2016] [Payara Foundation and/or its affiliates]
 package com.sun.ejb.containers;
 
 import com.sun.ejb.*;
@@ -109,6 +109,7 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * This class implements part of the com.sun.ejb.Container interface.
@@ -233,7 +234,7 @@ public abstract class BaseContainer
     protected static final String SINGLETON_BEAN_POOL_PROP = "singleton-bean-pool";
 
     protected ClassLoader loader = null;
-    protected Class ejbClass = null;
+    protected Class<?> ejbClass = null;
     protected Class sfsbSerializedClass = null;
     protected Method ejbPassivateMethod = null;
     protected Method ejbActivateMethod = null;
@@ -523,7 +524,7 @@ public abstract class BaseContainer
     protected EJBContainerStateManager containerStateManager;
     protected EJBContainerTransactionManager containerTransactionManager;
     
-    private final JCDIService jcdiService;
+    private JCDIService jcdiService;
 
     /**
      * This constructor is called from ContainerFactoryImpl when an
@@ -1637,8 +1638,13 @@ public abstract class BaseContainer
             ejbInv = createEjbInvocation(null, ctx);
             invocationManager.preInvoke(ejbInv);
             
-            if( (jcdiService != null) && jcdiService.isJCDIEnabled(ejbBundle)) {
+            if( (jcdiService != null) && jcdiService.isJCDIEnabled(ejbBundle) && this.ejbClass.getAnnotation(Vetoed.class) == null) {
                 jcdiCtx = jcdiService.createJCDIInjectionContext(ejbDescriptor);
+                if(jcdiCtx == null) {
+                    jcdiService = null;
+                }
+            }
+            if(jcdiCtx != null) {
                 instance = jcdiCtx.getInstance();
             } else {
                 injectEjbInstance(ctx);
@@ -1688,12 +1694,9 @@ public abstract class BaseContainer
 
         Object[] interceptorInstances = null;
 
-        if( (jcdiService != null) && jcdiService.isJCDIEnabled(ejbBundle)) {
-
-	        jcdiService.injectEJBInstance(context.getJCDIInjectionContext());
-
+        if( (jcdiService != null) && jcdiService.isJCDIEnabled(ejbBundle) && this.ejbClass.getAnnotation(Vetoed.class) == null) {
+	    jcdiService.injectEJBInstance(context.getJCDIInjectionContext());
             Class[] interceptorClasses = interceptorManager.getInterceptorClasses();
-
             interceptorInstances = new Object[interceptorClasses.length];
 
             for(int i = 0; i < interceptorClasses.length; i++) {
@@ -2008,7 +2011,6 @@ public abstract class BaseContainer
         if ( inv.ejb != null ) {
             // counterpart of invocationManager.preInvoke
             if (! inv.useFastPath) {
-                invocationManager.postInvoke(inv);
                 delistExtendedEntityManagers(inv.context);
             } else {
                 doTxProcessing = doTxProcessing && (inv.exception != null);
@@ -2025,7 +2027,9 @@ public abstract class BaseContainer
                 else
                     inv.exception = new EJBException(ex);
             }
-            
+            if (! inv.useFastPath) {
+                invocationManager.postInvoke(inv);
+            }
             releaseContext(inv);
         }
 

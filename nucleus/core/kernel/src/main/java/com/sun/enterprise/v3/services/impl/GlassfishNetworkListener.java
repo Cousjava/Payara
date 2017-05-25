@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2007-2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2014,2016] [C2B2 Consulting Limited and/or its affiliates]
+// Portions Copyright [2016] [Payara Foundation and/or its affiliates]
 package com.sun.enterprise.v3.services.impl;
 
 import com.sun.appserv.server.util.Version;
@@ -105,8 +105,6 @@ public class GlassfishNetworkListener extends GenericGrizzlyListener {
 
     @Override
     public void start() throws IOException {
-        registerMonitoringStatsProviders();
-        
         super.start();
     }
 
@@ -271,7 +269,8 @@ public class GlassfishNetworkListener extends GenericGrizzlyListener {
             final DelayedExecutor delayedExecutor,
             final int maxRequestHeaders, final int maxResponseHeaders) {
         
-        return new GlassfishHttpCodecFilter(
+        final org.glassfish.grizzly.http.HttpServerFilter httpCodecFilter =
+                new GlassfishHttpCodecFilter(
                 http == null || Boolean.parseBoolean(http.getXpoweredBy()),
                 http == null || Boolean.parseBoolean(http.getServerHeader()),
                 isChunkedEnabled,
@@ -281,8 +280,18 @@ public class GlassfishNetworkListener extends GenericGrizzlyListener {
                 delayedExecutor,
                 maxRequestHeaders,
                 maxResponseHeaders);
+        
+        if (http != null) { // could be null for HTTP redirect
+            httpCodecFilter.setMaxPayloadRemainderToSkip(
+                    Integer.parseInt(http.getMaxSwallowingInputBytes()));
+            
+            httpCodecFilter.setAllowPayloadForUndefinedHttpMethods(
+                    Boolean.parseBoolean(http.getAllowPayloadForUndefinedHttpMethods()));
+        }
+        
+        return httpCodecFilter;
     }
-    
+
     protected void registerMonitoringStatsProviders() {
         final String nameLocal = name;
         final GrizzlyMonitoring monitoring = grizzlyService.getMonitoring();

@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2016] [C2B2 Consulting Limited and/or its affiliates]
+// Portions Copyright [2016-2017] [Payara Foundation and/or its affiliates]
 
 package org.glassfish.weld.connector;
 
@@ -60,11 +60,8 @@ import javax.decorator.Decorator;
 import javax.ejb.MessageDriven;
 import javax.ejb.Stateful;
 import javax.ejb.Stateless;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.context.NormalScope;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.context.SessionScoped;
+import javax.enterprise.context.*;
+import javax.enterprise.inject.Model;
 import javax.enterprise.inject.Stereotype;
 import javax.inject.Scope;
 import javax.inject.Singleton;
@@ -118,11 +115,15 @@ public class WeldUtils {
         cdiScopeAnnotations = new ArrayList<String>();
         cdiScopeAnnotations.add(Scope.class.getName());
         cdiScopeAnnotations.add(NormalScope.class.getName());
+        cdiScopeAnnotations.add("javax.faces.view.ViewScoped");
+        cdiScopeAnnotations.add("javax.faces.flow.FlowScoped");
+        cdiScopeAnnotations.add(ConversationScoped.class.getName());
         cdiScopeAnnotations.add(ApplicationScoped.class.getName());
         cdiScopeAnnotations.add(SessionScoped.class.getName());
         cdiScopeAnnotations.add(RequestScoped.class.getName());
         cdiScopeAnnotations.add(Dependent.class.getName());
         cdiScopeAnnotations.add(Singleton.class.getName());
+        cdiScopeAnnotations.add(Model.class.getName());
     }
 
     protected static final List<String> cdiEnablingAnnotations;
@@ -495,6 +496,10 @@ public class WeldUtils {
             // If implicit discovery is enabled for the server, then check if it's disabled for the
             // deployment of this application.
             Object propValue = context.getAppProps().get(RuntimeTagNames.IMPLICIT_CDI_ENABLED_PROP);
+            Object appPropValue = context.getAppProps().get(RuntimeTagNames.PAYARA_ENABLE_IMPLICIT_CDI);
+            if(appPropValue != null) {
+                propValue = appPropValue;
+            }
 
             // If the property is not set, or it's value is true, then implicit discovery is enabled
             result = (propValue == null || Boolean.parseBoolean((String) propValue));

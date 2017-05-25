@@ -1,6 +1,6 @@
 /*
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- Copyright (c) 2016 C2B2 Consulting Limited. All rights reserved.
+ Copyright (c) 2016 Payara Foundation. All rights reserved.
  The contents of this file are subject to the terms of the Common Development
  and Distribution License("CDDL") (collectively, the "License").  You
  may not use this file except in compliance with the License.  You can
@@ -18,13 +18,12 @@ import fish.payara.nucleus.requesttracing.domain.RequestEvent;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Singleton;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.UUID;
 
 /**
  * @author mertcaliskan
  *
- * Stores all request events that are being traced down by {@link fish.payara.nucleus.requesttracing.interceptor.PayaraServletContainerInterceptor} in linked list placed in a thread local.
+ * Stores all request events  in a thread local that are being traced.
  * The start of the trace is marked with {@link EventType#TRACE_START} and the end of the trace is marked with {@link EventType#TRACE_END}.
  * All the request events placed in between are marked with a conversation id, which is the id of request event with type {@link EventType#TRACE_START}.
  */
@@ -59,5 +58,19 @@ public class RequestEventStore {
     // test methods
     RequestTrace getTrace() {
         return eventStore.get();
+    }
+
+    void setConverstationID(UUID newID) {
+        RequestTrace rt = eventStore.get();
+        rt.setConversationID(newID);
+    }
+
+    UUID getConversationID() {
+        RequestTrace rt = eventStore.get();
+        return rt.getConversationID();
+    }
+
+    boolean isTraceInProgress() {
+        return (eventStore.get().isStarted() && !eventStore.get().isCompleted());
     }
 }

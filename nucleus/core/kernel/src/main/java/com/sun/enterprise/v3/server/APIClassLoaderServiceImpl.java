@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2016-2017] [Payara Foundation and/or its affiliates]
 
 package com.sun.enterprise.v3.server;
 
@@ -155,6 +156,11 @@ public class APIClassLoaderServiceImpl implements PostConstruct {
     }
 
     private ClassLoader getExtensionClassLoader() {
+        // check for micro boot classloader as it needs to be in the hierachy
+        //if (Thread.currentThread().getContextClassLoader().getClass().getName().contains("LaunchedURLClassLoader")) {
+        //    return Thread.currentThread().getContextClassLoader();
+        //}
+        
         if (System.getSecurityManager() != null) {
             return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
                 public ClassLoader run() {
@@ -241,7 +247,16 @@ public class APIClassLoaderServiceImpl implements PostConstruct {
                         Module m = mr.getProvidingModule(name);
                         if (m != null) {
                             if(select(m)) {
-                                return m.getClassLoader().loadClass(name); // abort search if we fail to load.
+                                try {
+                                    return m.getClassLoader().loadClass(name); // abort search if we fail to load.
+                                }
+                                catch(ClassNotFoundException e) {
+                                    Throwable thr = e.getException();
+                                    if(thr != null) {
+                                        logger.log(Level.WARNING, "APIClassLoader.loadClass() caused exception", thr);
+                                    }
+                                    throw e;
+                                }
                             } else {
                                 logger.logp(Level.FINE, "APIClassLoaderServiceImpl$APIClassLoader", "loadClass",
                                         "Skipping loading {0} from module {1} as this module is not yet resolved.",

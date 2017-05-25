@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright [2016] [C2B2 Consulting Limited and/or its affiliates]
+ * Copyright [2016] [Payara Foundation and/or its affiliates]
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -77,7 +77,8 @@ public class CurrentBeforeParentClassLoader extends URLClassLoader {
      */
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if(!currentBeforeParentEnabled || isAlwaysDelegate(name))
+        boolean isWhitelisted = isWhitelistEnabled() && isWhiteListed(name);
+        if((!currentBeforeParentEnabled && (isWhitelistEnabled()? isWhitelisted : true)) || isAlwaysDelegate(name))
         {
             return super.loadClass(name, resolve);
         }
@@ -92,14 +93,38 @@ public class CurrentBeforeParentClassLoader extends URLClassLoader {
                 logger.finest(String.format("Found Locally: %s - %s", name, c.getName()));
             }
             catch(ClassNotFoundException e) {
-                logger.finest(String.format("Not Found Locally - Looking in Parent: %s", name));
-                return parent.loadClass(name);                
+                if(!isWhitelistEnabled() || isWhitelisted) {
+                    logger.finest(String.format("Not Found Locally - Looking in Parent: %s", name));
+                    return parent.loadClass(name);
+                }
+                else {
+                    throw new ClassNotFoundException(String.format("Whitelist enabled, but class [%s] is not whitelisted", name), e);
+                }
             }
             if (resolve) {
                 resolveClass(c);
             }
             return c;
         }
+    }
+
+
+    /**
+     * support for extreme class loading
+     *
+     * @param className
+     * @return true if white-listed
+     */
+    protected boolean isWhiteListed(String className) {
+        return false;
+    }
+
+
+    /**
+     * @return true if extreme classloading is enabled
+     */
+    protected boolean isWhitelistEnabled() {
+        return false;
     }
     
     

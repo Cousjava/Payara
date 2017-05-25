@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 1997-2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2016] [Payara Foundation and/or its affiliates]
 
 package com.sun.enterprise.deployment;
 
@@ -182,9 +183,9 @@ public abstract class WebBundleDescriptor extends CommonResourceBundleDescriptor
 
     public abstract void removeContextParameter(ContextParameter contextParameter);
 
-    public abstract Boolean isDistributable();
+    public abstract boolean isDistributable();
 
-    public abstract void setDistributable(Boolean isDistributable);
+    public abstract void setDistributable(boolean isDistributable);
 
     public abstract Enumeration<EjbReference> getEjbReferences();
 
@@ -415,6 +416,9 @@ public abstract class WebBundleDescriptor extends CommonResourceBundleDescriptor
     public abstract void setExtensionProperty(String key, String value);
 
     public abstract boolean hasExtensionProperty(String key);
+
+    public abstract boolean getServletInitializersEnabled();
+    public abstract void setServletInitializersEnabled(boolean tf);
 
     public boolean isConflictLoginConfig() {
         return conflictLoginConfig;

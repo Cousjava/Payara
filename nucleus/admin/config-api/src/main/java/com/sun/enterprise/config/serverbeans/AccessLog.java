@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2014-2016] [C2B2 Consulting Limited]
+// Portions Copyright [2016-2017] [Payara Foundation]
 
 package com.sun.enterprise.config.serverbeans;
 
@@ -203,12 +203,27 @@ public interface AccessLog extends ConfigBeanProxy, PropertyBag {
      * @return true if logging to console
      */
     @Attribute (defaultValue="false", dataType=Boolean.class)
-    boolean getLogToConsoleEnabled();
+    String getLogToConsoleEnabled();
     /**
      * specifies whether to display access logs to console
      * 
      * @param tf true/false
      */
     void setLogToConsoleEnabled(boolean tf);
+    
+    /*
+     * Conditional logging filter
+     *
+     * @return the condition filter for the log
+     */
+    @Attribute
+    String getCondition();
+    /*
+     * Condition logging filter
+     *
+     * @param condition the condition filter for the log 
+    */
+    void setCondition(String condition);
+
 }
 

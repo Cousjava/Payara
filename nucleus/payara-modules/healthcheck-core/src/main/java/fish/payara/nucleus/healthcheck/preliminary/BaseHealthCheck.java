@@ -1,6 +1,6 @@
 /*
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- Copyright (c) 2015 C2B2 Consulting Limited. All rights reserved.
+ Copyright (c) 2016 Payara Foundation. All rights reserved.
  The contents of this file are subject to the terms of the Common Development
  and Distribution License("CDDL") (collectively, the "License").  You
  may not use this file except in compliance with the License.  You can
@@ -17,16 +17,18 @@ import fish.payara.nucleus.healthcheck.*;
 import fish.payara.nucleus.healthcheck.configuration.Checker;
 import fish.payara.nucleus.healthcheck.configuration.HealthCheckServiceConfiguration;
 import fish.payara.nucleus.notification.NotificationService;
-import fish.payara.nucleus.notification.configuration.LogNotifier;
-import fish.payara.nucleus.notification.configuration.Notifier;
-import fish.payara.nucleus.notification.domain.LogNotificationEvent;
+import fish.payara.nucleus.notification.domain.EventSource;
+import fish.payara.nucleus.notification.domain.NotificationEvent;
+import fish.payara.nucleus.notification.domain.NotificationEventFactory;
+import fish.payara.nucleus.notification.domain.NotifierExecutionOptions;
+import fish.payara.nucleus.notification.service.NotificationEventFactoryStore;
 import org.glassfish.api.admin.ServerEnvironment;
 import org.jvnet.hk2.annotations.Contract;
 import org.jvnet.hk2.annotations.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.List;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -46,6 +48,12 @@ public abstract class BaseHealthCheck<O extends HealthCheckExecutionOptions, C e
 
     @Inject
     NotificationService notificationService;
+
+    @Inject
+    private NotificationEventFactoryStore eventFactoryStore;
+
+    @Inject
+    private HistoricHealthCheckEventStore healthCheckEventStore;
 
     protected O options;
     protected Class<C> checkerType;
@@ -71,7 +79,7 @@ public abstract class BaseHealthCheck<O extends HealthCheckExecutionOptions, C e
     protected HealthCheckExecutionOptions constructBaseOptions(Checker checker) {
         return new HealthCheckExecutionOptions(
                 Boolean.valueOf(checker.getEnabled()),
-                checker.getTime(),
+                Long.parseLong(checker.getTime()),
                 asTimeUnit(checker.getUnit()));
     }
 
@@ -134,11 +142,18 @@ public abstract class BaseHealthCheck<O extends HealthCheckExecutionOptions, C e
     }
 
     public void sendNotification(Level level, String message, Object[] parameters) {
+        String subject = "Health Check notification with severity level: " + level.getName();
 
-        LogNotificationEvent notificationEvent = new LogNotificationEvent();
-        notificationEvent.setLevel(level);
-        notificationEvent.setMessage(message);
-        notificationEvent.setParameters(parameters);
-        notificationService.notify(notificationEvent);
+        for (NotifierExecutionOptions notifierExecutionOptions : healthCheckService.getNotifierExecutionOptionsList()) {
+            if (notifierExecutionOptions.isEnabled()) {
+                NotificationEventFactory notificationEventFactory = eventFactoryStore.get(notifierExecutionOptions.getNotifierType());
+                NotificationEvent notificationEvent = notificationEventFactory.buildNotificationEvent(level, subject, message, parameters);
+                notificationService.notify(EventSource.HEALTHCHECK, notificationEvent);
+            }
+        }
+
+        if (healthCheckService.isHistoricalTraceEnabled()) {
+            healthCheckEventStore.addTrace(new Date().getTime(), level, subject, message, parameters);
+        }
     }
 }

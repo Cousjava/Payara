@@ -1,6 +1,6 @@
 /*
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- Copyright (c) 2016 C2B2 Consulting Limited. All rights reserved.
+ Copyright (c) 2016 Payara Foundation. All rights reserved.
  The contents of this file are subject to the terms of the Common Development
  and Distribution License("CDDL") (collectively, the "License").  You
  may not use this file except in compliance with the License.  You can
@@ -58,7 +58,7 @@ import org.jvnet.hk2.config.types.Property;
 @TargetType(value = {CommandTarget.DAS, CommandTarget.STANDALONE_INSTANCE, CommandTarget.CLUSTER, CommandTarget.CLUSTERED_INSTANCE, CommandTarget.CONFIG})
 @RestEndpoints({
     @RestEndpoint(configBean = Domain.class,
-            opType = RestEndpoint.OpType.GET,
+            opType = RestEndpoint.OpType.POST,
             path = "set-monitoring-configuration",
             description = "Sets the Monitoring Service Configuration to that specified")
 })
@@ -73,7 +73,7 @@ public class SetMonitoringConfiguration implements AdminCommand {
     @Inject
     MonitoringService monitoringService;
 
-    @Param(name = "enabled", optional = false)
+    @Param(name = "enabled", optional = true)
     private Boolean enabled;
 
     @Param(name = "amx", optional = true)
@@ -126,7 +126,8 @@ public class SetMonitoringConfiguration implements AdminCommand {
             }
 
         } catch (TransactionFailure ex) {
-            Logger.getLogger(SetMonitoringConfiguration.class.getName()).log(Level.WARNING, "Exception during command ", ex);
+            Logger.getLogger(SetMonitoringConfiguration.class.getName()).log(Level.WARNING, "Exception during command "
+                    + "set-monitoring-configuration: " + ex.getCause().getMessage());
             actionReport.setMessage(ex.getCause().getMessage());
             actionReport.setActionExitCode(ActionReport.ExitCode.FAILURE);
         }

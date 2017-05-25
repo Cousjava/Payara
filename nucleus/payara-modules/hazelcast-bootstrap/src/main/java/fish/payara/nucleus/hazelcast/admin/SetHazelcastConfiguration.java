@@ -2,7 +2,7 @@
 
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2014-2016 C2B2 Consulting Limited. All rights reserved.
+ Copyright (c) 2014-2016 Payara Foundation. All rights reserved.
 
  The contents of this file are subject to the terms of the Common Development
  and Distribution License("CDDL") (collectively, the "License").  You
@@ -17,11 +17,8 @@
  */
 package fish.payara.nucleus.hazelcast.admin;
 
-import com.sun.enterprise.config.serverbeans.Clusters;
 import com.sun.enterprise.config.serverbeans.Config;
 import com.sun.enterprise.config.serverbeans.Domain;
-import com.sun.enterprise.config.serverbeans.Servers;
-import com.sun.enterprise.util.SystemPropertyConstants;
 import fish.payara.nucleus.hazelcast.HazelcastCore;
 import fish.payara.nucleus.hazelcast.HazelcastRuntimeConfiguration;
 import java.beans.PropertyVetoException;
@@ -116,6 +113,9 @@ public class SetHazelcastConfiguration implements AdminCommand {
     @Param(name = "lite", optional = true, defaultValue = "false")
     private Boolean lite;
 
+    @Param(name = "hostawareParitioning", optional = true, defaultValue = "false")
+    private Boolean hostawarePartitioning;    
+    
     @Inject
     ServiceLocator serviceLocator;
 
@@ -162,6 +162,11 @@ public class SetHazelcastConfiguration implements AdminCommand {
                         if (lite != null) {
                             hazelcastRuntimeConfigurationProxy.setLite(lite.toString());
                         }
+                        
+                        if (hostawarePartitioning != null) {
+                            hazelcastRuntimeConfigurationProxy.setHostAwarePartitioning(hostawarePartitioning.toString());
+                        }
+                        
                         if (hzClusterName != null) {
                             hazelcastRuntimeConfigurationProxy.setClusterGroupName(hzClusterName);
                         }

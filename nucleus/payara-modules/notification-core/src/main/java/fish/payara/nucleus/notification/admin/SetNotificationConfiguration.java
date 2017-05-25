@@ -1,16 +1,48 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2016-2017 Payara Foundation and/or its affiliates. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of either the GNU
+ * General Public License Version 2 only ("GPL") or the Common Development
+ * and Distribution License("CDDL") (collectively, the "License").  You
+ * may not use this file except in compliance with the License.  You can
+ * obtain a copy of the License at
+ * https://github.com/payara/Payara/blob/master/LICENSE.txt
+ * See the License for the specific
+ * language governing permissions and limitations under the License.
+ *
+ * When distributing the software, include this License Header Notice in each
+ * file and include the License file at glassfish/legal/LICENSE.txt.
+ *
+ * GPL Classpath Exception:
+ * The Payara Foundation designates this particular file as subject to the "Classpath"
+ * exception as provided by the Payara Foundation in the GPL Version 2 section of the License
+ * file that accompanied this code.
+ *
+ * Modifications:
+ * If applicable, add the following below the License Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
+ * "Portions Copyright [year] [name of copyright owner]"
+ *
+ * Contributor(s):
+ * If you wish your version of this file to be governed by only the CDDL or
+ * only the GPL Version 2, indicate your decision by adding "[Contributor]
+ * elects to include this software in this distribution under the [CDDL or GPL
+ * Version 2] license."  If you don't indicate a single choice of license, a
+ * recipient has the option to distribute your version of this file under
+ * either the CDDL, the GPL Version 2 or to extend the choice of license to
+ * its licensees as provided above.  However, if you add GPL Version 2 code
+ * and therefore, elected the GPL Version 2 license, then the option applies
+ * only if the new code is made subject to such option by the copyright
+ * holder.
  */
 package fish.payara.nucleus.notification.admin;
 
 import com.sun.enterprise.config.serverbeans.Domain;
 import com.sun.enterprise.util.SystemPropertyConstants;
-import fish.payara.nucleus.notification.domain.execoptions.NotifierConfigurationExecutionOptionsFactory;
 import java.util.Properties;
 import javax.inject.Inject;
-import static javax.management.Query.value;
+
+import fish.payara.nucleus.notification.configuration.NotificationServiceConfiguration;
 import org.glassfish.api.ActionReport;
 import org.glassfish.api.I18n;
 import org.glassfish.api.Param;
@@ -28,7 +60,6 @@ import org.glassfish.config.support.TargetType;
 import org.glassfish.hk2.api.PerLookup;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.jvnet.hk2.annotations.Service;
-import static javax.management.Query.value;
 
 /**
  * Admin command to set notification services configuration
@@ -42,7 +73,7 @@ import static javax.management.Query.value;
 @PerLookup
 @I18n("set.notification.configuration")
 @RestEndpoints({
-    @RestEndpoint(configBean = Domain.class,
+    @RestEndpoint(configBean = NotificationServiceConfiguration.class,
             opType = RestEndpoint.OpType.POST,
             path = "set-notification-configuration",
             description = "Set notification Services Configuration")
@@ -61,11 +92,11 @@ public class SetNotificationConfiguration implements AdminCommand {
     @Param(name = "notifierDynamic", optional = true, defaultValue = "false")
     protected Boolean notifierDynamic;
 
-    @Param(name = "notifierEnabled", optional = false)
+    @Param(name = "notifierEnabled")
     private Boolean notifierEnabled;
 
-    @Param(name = "notifierName", optional = true, defaultValue = "service-log")
-    private String notifierName;
+    @Param(name = "useSeparateLogFile", defaultValue = "false")
+    private Boolean useSeparateLogFile;
 
     @Inject
     ServiceLocator serviceLocator;
@@ -81,27 +112,11 @@ public class SetNotificationConfiguration implements AdminCommand {
             extraProperties = new Properties();
             actionReport.setExtraProperties(extraProperties);
         }
-
-        if (dynamic || enabled) {
-            if (dynamic) {
-                notifierDynamic = true;
-            } else {
-                notifierDynamic = false;
-            }
-            if (enabled) {
-                notifierEnabled = true;
-            } else {
-                notifierEnabled = false;
-            }
-            enableNotificationConfigureOnTarget(actionReport, theContext, enabled);
-        }
-
-        if (notifierDynamic || notifierEnabled) {
-            enableNotificationNotifierConfigurerOnTarget(actionReport, theContext, notifierEnabled);
-        }
+        enableNotificationConfigureOnTarget(actionReport, theContext);
+        enableNotificationNotifierConfigurerOnTarget(actionReport, theContext);
     }
 
-    private void enableNotificationConfigureOnTarget(ActionReport actionReport, AdminCommandContext context, Boolean enabled) {
+    private void enableNotificationConfigureOnTarget(ActionReport actionReport, AdminCommandContext context) {
         CommandRunner runner = serviceLocator.getService(CommandRunner.class);
         ActionReport subReport = context.getActionReport().addSubActionsReport();
 
@@ -119,17 +134,17 @@ public class SetNotificationConfiguration implements AdminCommand {
         }
     }
 
-    private void enableNotificationNotifierConfigurerOnTarget(ActionReport actionReport, AdminCommandContext context, Boolean enabled) {
+    private void enableNotificationNotifierConfigurerOnTarget(ActionReport actionReport, AdminCommandContext context) {
         CommandRunner runner = serviceLocator.getService(CommandRunner.class);
         ActionReport subReport = context.getActionReport().addSubActionsReport();
 
-        inv = runner.getCommandInvocation("notification-configure-notifier", subReport, context.getSubject());
+        inv = runner.getCommandInvocation("notification-log-configure", subReport, context.getSubject());
 
         ParameterMap params = new ParameterMap();
         params.add("dynamic", notifierDynamic.toString());
         params.add("target", target);
-        params.add("notifierName", notifierName);
-        params.add("notifierEnabled", enabled.toString());
+        params.add("enabled", notifierEnabled.toString());
+        params.add("useSeparateLogFile", useSeparateLogFile.toString());
         inv.parameters(params);
         inv.execute();
         // swallow the offline warning as it is not a problem
