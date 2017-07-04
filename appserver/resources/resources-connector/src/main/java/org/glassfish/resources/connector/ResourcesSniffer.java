@@ -70,12 +70,13 @@ public class ResourcesSniffer extends GenericSniffer {
     }
 
     /**
-     * Returns true if the passed file or directory is recognized by this
+     * Returns true if the passed file or directory is recognised by this
      * instance.
      *
      * @param archive the file or directory to explore
      * @return true if this sniffer handles this application type
      */
+    @Override
     public boolean handles(ReadableArchive archive) {
         return ResourceUtil.hasResourcesXML(archive, locator)
                 && archive.getParentArchive() == null;
@@ -89,6 +90,7 @@ public class ResourcesSniffer extends GenericSniffer {
      *
      * @return list of container names known to the habitat for this sniffer
      */
+    @Override
     public String[] getContainersNames() {
         return containerNames;
     }
@@ -98,6 +100,7 @@ public class ResourcesSniffer extends GenericSniffer {
      *
      * @return the container name
      */
+    @Override
     public String getModuleType() {
         return ResourceConstants.GF_RESOURCES_MODULE;
     }
@@ -113,6 +116,7 @@ public class ResourcesSniffer extends GenericSniffer {
      * @return whether the sniffer supports the archive type
      *
      */
+    @Override
     public boolean supportsArchiveType(ArchiveType archiveType) {
         if (archiveType.toString().equals(ModuleType.WAR.toString()) ||
             archiveType.toString().equals(ModuleType.EJB.toString()) ||
@@ -129,6 +133,7 @@ public class ResourcesSniffer extends GenericSniffer {
     private static List<String> initDeploymentConfigurationPaths() {
         final List<String> result = new ArrayList<String>();
         result.add(ResourceConstants.GF_RESOURCES_LOCATION);
+        result.add(ResourceConstants.PY_RESOURCES_LOCATION);
         return result;
     }
 

@@ -36,6 +36,8 @@
  * and therefore, elected the GPL Version 2 license, then the option applies
  * only if the new code is made subject to such option by the copyright
  * holder.
+ *
+ * Portions Copyright [2017] Payara Foundation and/or affiliates
  */
 
 package org.glassfish.resources.admin.cli;
@@ -117,7 +119,10 @@ public class ResourcesXMLParser implements EntityResolver
     private static final String publicID_sjsas90 = "Sun Microsystems, Inc.//DTD Application Server 9.0 Resource Definitions";
     private static final String publicID_ges30 = "Sun Microsystems, Inc.//DTD GlassFish Application Server 3.0 Resource Definitions";
     private static final String publicID_ges31 = "GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions";
+    private static final String publicID_py4173 = "Payara Foundation//DTD Payara Server 4 Resource Definitions";
 
+    //TODO: add Payara dtd
+    private static final String DTD_1_6 = "payara-resources_1_6.dtd";
     private static final String DTD_1_5 = "glassfish-resources_1_5.dtd";
     private static final String DTD_1_4 = "sun-resources_1_4.dtd";
     private static final String DTD_1_3 = "sun-resources_1_3.dtd";
@@ -127,6 +132,7 @@ public class ResourcesXMLParser implements EntityResolver
     
     private static final List<String> systemIDs = Collections.unmodifiableList(
             Arrays.asList(
+                    DTD_1_6,
                     DTD_1_5,
                     DTD_1_4,
                     DTD_1_3,
@@ -190,9 +196,7 @@ public class ResourcesXMLParser implements EntityResolver
         }
 
         HashMap<String,String> attrs = modifiedResource.getAttributes();
-        Iterator entries = attrs.entrySet().iterator();
-        while (entries.hasNext()) {
-            Map.Entry thisEntry = (Map.Entry) entries.next();
+        for (Map.Entry thisEntry : attrs.entrySet()) {
             ((Element)resourceNode).setAttribute((String) thisEntry.getKey(), (String)thisEntry.getValue());
         }
 
@@ -1561,18 +1565,22 @@ public class ResourcesXMLParser implements EntityResolver
     
     
       final static class AddResourcesErrorHandler implements ErrorHandler {
+          @Override
           public void error(SAXParseException e) throws org.xml.sax.SAXException{
            throw e ;
         }
+          @Override
           public void fatalError(SAXParseException e) throws org.xml.sax.SAXException{
           throw e ;
         }
+          @Override
           public void warning(SAXParseException e) throws org.xml.sax.SAXException{
           throw e ;
         }
     }
       
       
+    @Override
     public InputSource resolveEntity(String publicId, String systemId)
         throws SAXException {
         InputSource is = null;

@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2016] [Payara Foundation]
+// Portions Copyright [2016-2017] [Payara Foundation]
 
 package com.sun.enterprise.v3.server;
 
@@ -167,6 +167,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
 
     private Collection<ApplicationLifecycleInterceptor> alcInterceptors = Collections.EMPTY_LIST;
     
+    @Override
     public void postConstruct() {
         executorService = createExecutorService();
         deploymentLifecycleProbeProvider = 
@@ -216,10 +217,12 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         return null;
     }
 
+    @Override
     public ApplicationInfo deploy(final ExtendedDeploymentContext context) {
         return deploy(null, context);
     }
 
+    @Override
     public ApplicationInfo deploy(Collection<? extends Sniffer> sniffers, final ExtendedDeploymentContext context) {
 
         long operationStartTime = Calendar.getInstance().getTimeInMillis();
@@ -1109,8 +1112,14 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         appRegistry.remove(appName);
     }
 
-    // prepare application config change for later registering
-    // in the domain.xml
+    /* 
+    */
+    
+    /**
+     * prepare application config change for later registering
+     * in the domain.xml
+     */
+    @Override
     public Transaction prepareAppConfigChanges(final DeploymentContext context)
         throws TransactionFailure {
         final Properties appProps = context.getAppProps();
@@ -1135,14 +1144,18 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         return t;
     }
 
-    // register application information in domain.xml
+    /** register application information in domain.xml
+     */
+    @Override
     public void registerAppInDomainXML(final ApplicationInfo
         applicationInfo, final DeploymentContext context, Transaction t) 
         throws TransactionFailure {
         registerAppInDomainXML(applicationInfo, context, t, false);
     }
 
-    // register application information in domain.xml
+    /** register application information in domain.xml
+     */
+    @Override
     public void registerAppInDomainXML(final ApplicationInfo
         applicationInfo, final DeploymentContext context, Transaction t, 
         boolean appRefOnly)
@@ -1248,6 +1261,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         }
     }
 
+    @Override
     public void registerTenantWithAppInDomainXML(
             final String appName,
             final ExtendedDeploymentContext context) throws TransactionFailure {
@@ -1270,6 +1284,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         }
     }
 
+    @Override
     public void unregisterTenantWithAppInDomainXML(
             final String appName,
             final String tenantName
@@ -1399,11 +1414,13 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         }
     }
 
+    @Override
     public void unregisterAppFromDomainXML(final String appName,
         final String target) throws TransactionFailure {
         unregisterAppFromDomainXML(appName, target, false);
     }
 
+    @Override
     public void unregisterAppFromDomainXML(final String appName, 
         final String tgt, final boolean appRefOnly) 
         throws TransactionFailure {
@@ -1488,6 +1505,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
     }
 
 
+    @Override
     public void updateAppEnabledAttributeInDomainXML(final String appName,
         final String target, final boolean enabled) throws TransactionFailure {
         ConfigSupport.apply(new SingleConfigCode() {
@@ -1562,11 +1580,14 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         }, domain);
     }
 
-    // check if the application is registered in domain.xml
+    /** check if the application is registered in domain.xml
+    */
+     @Override
     public boolean isRegistered(String appName) {
         return applications.getApplication(appName)!=null;
     }
 
+    @Override
     public ApplicationInfo get(String appName) {
         return appRegistry.get(appName);
     }
@@ -1583,7 +1604,9 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         return false;
     }
 
-    // gets the default target when no target is specified for non-paas case
+    /** gets the default target when no target is specified for non-paas case
+    */
+    @Override
     public String getDefaultTarget(Boolean isClassicStyle) {
         if (!isPaaSEnabled(isClassicStyle)) {
             return DeploymentUtils.DAS_TARGET_NAME;     
@@ -1591,7 +1614,9 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         return null;
     }
 
-    // gets the default target when no target is specified
+    /** gets the default target when no target is specified
+     */
+    @Override
     public String getDefaultTarget(String appName, OpsParams.Origin origin, Boolean isClassicStyle) {
         if (!isPaaSEnabled(isClassicStyle)) {
             return DeploymentUtils.DAS_TARGET_NAME;     
@@ -1603,7 +1628,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
            // for other cases, we try to derive it from domain.xml
            List<String> targets = 
                domain.getAllReferencedTargetsForApplication(appName); 
-           if (targets.size() == 0) {
+           if (targets.isEmpty()) {
                throw new IllegalArgumentException("Application not registered");
            }
            if (targets.size() > 1) {
@@ -1636,44 +1661,56 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
             handler = b.archiveHandler();
         }
 
+        @Override
         public DeploymentContextBuilder source(File source) {
             this.sFile = source;
             return this;
         }
 
+        @Override
         public File sourceAsFile() {
             return sFile;
         }
+        @Override
         public ReadableArchive sourceAsArchive() {
             return sArchive;
         }
 
+        @Override
         public ArchiveHandler archiveHandler() {
             return handler;
         }
 
+        @Override
         public DeploymentContextBuilder source(ReadableArchive archive) {
             this.sArchive = archive;
             return this;
         }
 
+        @Override
         public DeploymentContextBuilder archiveHandler(ArchiveHandler handler) {
             this.handler = handler;
             return this;
         }
 
+        @Override
         public ExtendedDeploymentContext build() throws IOException {
             return build(null);
         }
+        @Override
         public Logger logger() { return logger; };
+        @Override
         public ActionReport report() { return report; };
+        @Override
         public OpsParams params() { return params; };
 
+        @Override
         public ExtendedDeploymentContext build(ExtendedDeploymentContext initialContext) throws IOException {
             return ApplicationLifecycle.this.getContext(initialContext, this);
         }
     }
 
+    @Override
     public DeploymentContextBuilder getBuilder(Logger logger, OpsParams params, ActionReport report) {
         return new DeploymentContextBuidlerImpl(logger, params, report);
     }
@@ -1854,6 +1891,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         appRef.setEnabled(deployParams.enabled.toString());
     }        
 
+    @Override
     public ParameterMap prepareInstanceDeployParamMap(DeploymentContext dc) 
         throws Exception {
         final DeployCommandParameters params = dc.getCommandParameters(DeployCommandParameters.class);
@@ -2017,6 +2055,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         }
     }
 
+    @Override
     public void validateDeploymentTarget(String target, String name, 
         boolean isRedeploy) {
         List<String> referencedTargets = domain.getAllReferencedTargetsForApplication(name);
@@ -2054,6 +2093,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         }
     }
 
+    @Override
     public void validateUndeploymentTarget(String target, String name) {
         List<String> referencedTargets = domain.getAllReferencedTargetsForApplication(name);
         if (referencedTargets.size() > 1) {
@@ -2068,6 +2108,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         }
     }
 
+    @Override
     public void validateSpecifiedTarget(String target) {
         if (env.isDas()) {
             if (target == null) {
@@ -2083,6 +2124,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         }
     }
 
+    @Override
     public boolean isAppEnabled(Application app) {
         if (Boolean.valueOf(app.getEnabled())) {
             ApplicationRef appRef = server.getApplicationRef(app.getName());
@@ -2129,6 +2171,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         return deploymentContext;
     }
 
+    @Override
     public ExtendedDeploymentContext enable(String target, Application app, ApplicationRef appRef, 
         ActionReport report, Logger logger) throws Exception {
         ReadableArchive archive = null; 
@@ -2217,6 +2260,7 @@ public class ApplicationLifecycle implements Deployment, PostConstruct {
         return sb.toString();
     }
 
+    @Override
     public List<Sniffer> getSniffersFromApp(Application app) {
         List<String> snifferTypes = new ArrayList<String>();
         for (com.sun.enterprise.config.serverbeans.Module module : app.getModule()) {

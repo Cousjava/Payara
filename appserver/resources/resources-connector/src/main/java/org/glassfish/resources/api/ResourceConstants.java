@@ -36,6 +36,8 @@
  * and therefore, elected the GPL Version 2 license, then the option applies
  * only if the new code is made subject to such option by the copyright
  * holder.
+ *
+ * Portions Copyright [2017] Payara Foundation and/or affiliates
  */
 
 package org.glassfish.resources.api;
@@ -106,6 +108,11 @@ public interface ResourceConstants {
      * Represents the location where glassfish-resources.xml will be present in an archive
      */
     public static final String GF_RESOURCES_LOCATION ="META-INF/glassfish-resources.xml";
+    
+    /**
+     * Represents the location where payara-resources.xml will be present in an archive
+     */
+    public static final String PY_RESOURCES_LOCATION="META-INF/payara-resources.xml";
 
     /** resource type residing in an external JNDI repository */
     public static final String EXT_JNDI_RES_TYPE = "external-jndi-resource";

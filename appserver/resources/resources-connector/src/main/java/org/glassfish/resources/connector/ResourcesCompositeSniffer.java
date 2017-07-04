@@ -36,6 +36,8 @@
  * and therefore, elected the GPL Version 2 license, then the option applies
  * only if the new code is made subject to such option by the copyright
  * holder.
+ *
+ * Portions Copyright [2017] Payara Foundation and/or affiliates
  */
 
 package org.glassfish.resources.connector;
@@ -91,6 +93,7 @@ public class ResourcesCompositeSniffer extends GenericSniffer {
      *
      * @return list of container names known to the habitat for this sniffer
      */
+    @Override
     public String[] getContainersNames() {
         return containerNames;
     }
@@ -100,6 +103,7 @@ public class ResourcesCompositeSniffer extends GenericSniffer {
      *
      * @return the container name
      */
+    @Override
     public String getModuleType() {
         return ResourceConstants.GF_RESOURCES_MODULE_EAR;
     }
@@ -115,6 +119,7 @@ public class ResourcesCompositeSniffer extends GenericSniffer {
      * @return whether the sniffer supports the archive type
      *
      */
+    @Override
     public boolean supportsArchiveType(ArchiveType archiveType) {
         if (archiveType.toString().equals(ModuleType.EAR.toString())) {
             return true;

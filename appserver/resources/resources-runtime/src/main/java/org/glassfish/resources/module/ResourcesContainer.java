@@ -36,6 +36,8 @@
  * and therefore, elected the GPL Version 2 license, then the option applies
  * only if the new code is made subject to such option by the copyright
  * holder.
+ *
+ * Portions Copyirght [2017] Payara Foundation and/or affiliates
  */
 
 package org.glassfish.resources.module;
@@ -57,10 +59,12 @@ public class ResourcesContainer implements Container, PostConstruct, PreDestroy 
 
     private final static Logger _logger = LogDomains.getLogger(ResourcesContainer.class, LogDomains.RSR_LOGGER);
 
+    @Override
     public void postConstruct() {
         logFine("postConstruct of ConnectorContainer");
     }
 
+    @Override
     public void preDestroy() {
         logFine("preDestroy of ConnectorContainer");
     }
@@ -71,6 +75,7 @@ public class ResourcesContainer implements Container, PostConstruct, PreDestroy 
      *
      * @return the Deployer implementation
      */
+    @Override
     public Class<? extends Deployer> getDeployer() {
         return ResourcesDeployer.class;
     }
@@ -82,6 +87,7 @@ public class ResourcesContainer implements Container, PostConstruct, PreDestroy 
      *
      * @return a human readable name for this container.
      */
+    @Override
     public String getName() {
         return ResourceConstants.GF_RESOURCES_MODULE;
     }

@@ -36,6 +36,8 @@
  * and therefore, elected the GPL Version 2 license, then the option applies
  * only if the new code is made subject to such option by the copyright
  * holder.
+ *
+ * Portions Copyright [2017] Payara Foundation and/or affiliates
  */
 
 package org.glassfish.resources.module;
@@ -132,6 +134,8 @@ public class ResourcesDeployer extends JavaEEDeployer<ResourcesContainer, Resour
 
     private static final String RESOURCES_XML_META_INF = "META-INF/glassfish-resources.xml";
     private static final String RESOURCES_XML_WEB_INF = "WEB-INF/glassfish-resources.xml";
+    private static final String PAYARA_RESOURCES_XML_META_INF = "META-INF/payara-resources.xml";
+    private static final String PAYARA_RESOURCES_XML_WEB_INF = "WEB-INF/payara-resources.xml";
 
     @Inject
     public ResourcesDeployer(org.glassfish.resources.admin.cli.ResourceFactory resourceFactoryParam,
@@ -146,10 +150,12 @@ public class ResourcesDeployer extends JavaEEDeployer<ResourcesContainer, Resour
         applications = applicationsParam;
     }
 
+    @Override
     public void postConstruct() {
         events.register(this);
     }
 
+    @Override
     public void preDestroy(){
         events.unregister(this);
     }
@@ -172,6 +178,7 @@ public class ResourcesDeployer extends JavaEEDeployer<ResourcesContainer, Resour
         return application;
     }
 
+    @Override
     public void unload(ResourcesApplication appContainer, DeploymentContext context) {
         //TODO unregistering resources, removing resources configuration.
         debug("Resources-Deployer :unload() called");
@@ -180,7 +187,7 @@ public class ResourcesDeployer extends JavaEEDeployer<ResourcesContainer, Resour
     /**
      * Retrieve connector and non-connector resources from the archive.
      *
-     * @param archive Archieve from which the resources to be retrieved.
+     * @param archive Archive from which the resources to be retrieved.
      * @param appName Name of the application
      * @param connectorResources Connector resources will be added to this list.
      * @param nonConnectorResources Non connector resources will be added to this list.
@@ -238,7 +245,7 @@ public class ResourcesDeployer extends JavaEEDeployer<ResourcesContainer, Resour
         } catch (Exception e) {
             // only DeploymentExceptions are propagated and result in deployment failure
             // in the event notification infrastructure
-            throw new DeploymentException("Failue while processing glassfish-resources.xml(s) in the archive ", e);
+            throw new DeploymentException("Failure while processing glassfish-resources.xml(s) in the archive ", e);
         }
     }
     
@@ -298,7 +305,7 @@ public class ResourcesDeployer extends JavaEEDeployer<ResourcesContainer, Resour
         } catch (Exception e) {
             // only DeploymentExceptions are propagated and result in deployment failure
             // in the event notification infrastructure
-            throw new DeploymentException("Failue while processing glassfish-resources.xml(s) in the archive ", e);
+            throw new DeploymentException("Failure while processing glassfish-resources.xml(s) in the archive ", e);
         }
     }
 
@@ -655,6 +662,16 @@ public class ResourcesDeployer extends JavaEEDeployer<ResourcesContainer, Resour
                 }
                 fileNames.put(actualArchiveName, fileName);
             }
+            //Look for top-level META-INF/payara-resources.xml
+            if(archive.exists(PAYARA_RESOURCES_XML_META_INF)){
+                String archivePath = archive.getURI().getPath();
+                String fileName = archivePath + PAYARA_RESOURCES_XML_META_INF;
+                if(_logger.isLoggable(Level.FINEST)){
+                    _logger.finest("Payara-Resources Deployer - fileName : " + fileName +
+                            " - parent : " + archive.getName());
+                }
+                fileNames.put(actualArchiveName, fileName);
+            }
 
             //Lok for sub-module level META-INF/glassfish-resources.xml and WEB-INF/glassfish-resources.xml
             Enumeration<String> entries = archive.entries();
@@ -691,6 +708,23 @@ public class ResourcesDeployer extends JavaEEDeployer<ResourcesContainer, Resour
 
             fileNames.put(actualArchiveName, fileName);
         }
+        
+        if(ResourceUtil.hasPayaraResourcesXML(archive, locator)){
+            String archivePath = archive.getURI().getPath();
+            String fileName ;
+            if(DeploymentUtils.isArchiveOfType(archive, DOLUtils.warType(), locator)){
+                fileName = archivePath +  PAYARA_RESOURCES_XML_WEB_INF;
+            }else{
+                fileName = archivePath + PAYARA_RESOURCES_XML_META_INF;
+            }
+            if(_logger.isLoggable(Level.FINEST)){
+                _logger.finest("Payara-Resources Deployer - fileName : " + fileName +
+                        " - parent : " + archive.getName());
+            }
+
+            fileNames.put(actualArchiveName, fileName);
+        }
+        
     }
 
     /**
@@ -708,6 +742,7 @@ public class ResourcesDeployer extends JavaEEDeployer<ResourcesContainer, Resour
      * if <i>preserveResources</i> flag is set, cache the &lt;resources&gt;
      * config for persisting it in domain.xml
      */
+    @Override
     public void event(Event event) {
         if (event.is(Deployment.DEPLOYMENT_BEFORE_CLASSLOADER_CREATION)) {
             DeploymentContext dc = (DeploymentContext) event.hook();

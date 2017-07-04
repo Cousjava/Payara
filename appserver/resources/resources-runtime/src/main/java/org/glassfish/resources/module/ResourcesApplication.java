@@ -36,6 +36,8 @@
  * and therefore, elected the GPL Version 2 license, then the option applies
  * only if the new code is made subject to such option by the copyright
  * holder.
+ *
+ * Portions Copyright [2017] Payara Foundation and/or affiliates
  */
 
 package org.glassfish.resources.module;
@@ -86,13 +88,15 @@ public class ResourcesApplication implements ApplicationContainer{
         return applicationName;
     }
 
+    @Override
     public Object getDescriptor() {
         //TODO return all resources-xml ?
         return null;  
     }
 
+    @Override
     public boolean start(ApplicationContext startupContext) throws Exception {
-        DeploymentContext dc = (DeploymentContext)startupContext;
+        DeploymentContext dc = (DeploymentContext) startupContext;
         final DeployCommandParameters deployParams = dc.getCommandParameters(DeployCommandParameters.class);
         //during app. deployment, create resources config and load resources
         if(deployParams.origin == OpsParams.Origin.deploy || deployParams.origin == OpsParams.Origin.deploy_instance){
@@ -108,24 +112,29 @@ public class ResourcesApplication implements ApplicationContainer{
         return true;
     }
 
+    @Override
     public boolean stop(ApplicationContext stopContext) {
         asrManager.undeployResources(applicationName);
         return true;
     }
 
+    @Override
     public boolean suspend() {
         return true;
     }
 
+    @Override
     public boolean resume() throws Exception {
         return true;
     }
 
+    @Override
     public ClassLoader getClassLoader() {
         //TODO return loader
         return null;
     }
-    private void  debug(String message){
+    
+    private void debug(String message){
         if(_logger.isLoggable(Level.FINEST)) {
             _logger.finest("[ResourcesApplication] " + message);
         }

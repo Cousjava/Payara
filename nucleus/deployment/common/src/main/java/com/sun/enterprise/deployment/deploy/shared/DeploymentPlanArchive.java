@@ -36,6 +36,8 @@
  * and therefore, elected the GPL Version 2 license, then the option applies
  * only if the new code is made subject to such option by the copyright
  * holder.
+ *
+ * Portions Copyright [2017] Payara Foundation and/or affiliates
  */
 
 package com.sun.enterprise.deployment.deploy.shared;
@@ -89,7 +91,9 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
     /** Open an existing DeploymentPlan archive and return 
      * a abstraction for reading from it.
      * @param uri the path to the archive
+     * @throws java.io.IOException
      */
+    @Override
     public void open(URI uri) throws IOException {
         this.uri = uri;
         File f = new File(uri);
@@ -102,6 +106,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
      * Get the size of the archive
      * @return tje the size of this archive or -1 on error
      */
+    @Override
     public long getArchiveSize() throws NullPointerException, SecurityException {
         if(uri == null) {
             return -1;
@@ -112,7 +117,9 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
     
     /**
      * Closes the current jar file
+     * @throws java.io.IOException
      */
+    @Override
     public void close() throws java.io.IOException {
         if (jarFile!=null) {
             jarFile.close();
@@ -136,7 +143,9 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
     
     /**
      * Deletes the underlying jar file
+     * @return true is file successfully deleted, false if file failed to delete or is absent
      */
+    @Override
     public boolean delete() {
         File f = new File(uri);
         if (f.exists()) {
@@ -145,6 +154,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
         return false;
     }
 
+    @Override
     public JarEntry getJarEntry(String name) {
         if (jarFile!=null) {
             return jarFile.getJarEntry(name);
@@ -152,6 +162,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
         return null;
     }
 
+    @Override
     public Collection<String> getDirectories() throws IOException {
         return new Vector<String>();
     }
@@ -159,6 +170,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
     /**
      * @return an Enumeration of entries for this archive
      */
+    @Override
     public Enumeration entries() {
         // Deployment Plan are organized flatly, 
         
@@ -183,12 +195,12 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
             String prefix = "META-INF/";
             ArchiveType warType = locator.getService(ArchiveType.class, "war");
             boolean isWar = DeploymentUtils.isArchiveOfType(getParentArchive(), warType, locator);
-            if (entryName.indexOf("sun-web.xml")!=-1 || 
-                entryName.indexOf("glassfish-web.xml")!=-1) {
+            if (entryName.contains("sun-web.xml") || 
+                entryName.contains("glassfish-web.xml")) {
                 prefix = "WEB-INF/";
-            } else if (entryName.indexOf("glassfish-resources.xml")!=-1 && isWar) {
+            } else if ((entryName.contains("glassfish-resources.xml") || (entryName.contains("payara-resources.xml"))) && isWar) {
                 prefix = "WEB-INF/";
-            } else if (entryName.indexOf("glassfish-services.xml")!=-1 && isWar) {
+            } else if (entryName.contains("glassfish-services.xml") && isWar) {
                 prefix = "WEB-INF/";
             }
             if (subArchiveUri != null && entryName.startsWith(subArchiveUri)) {
@@ -231,6 +243,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
     /**
      * @return true if the underlying archive exists
      */
+    @Override
     public boolean exists() {
         File f = new File(uri);
         return f.exists();
@@ -239,6 +252,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
     /**
      * @return a sub archive giving the name 
      */
+    @Override
     public ReadableArchive getSubArchive(String name) throws java.io.IOException {
         if (jarFile==null) {
             return null;
@@ -262,7 +276,9 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
      * The file name must be relative to the root of the module.
      *
      * @param name the file name relative to the root of the module.          * @return the existence the given entry name.
+     * @throws java.io.IOException
      */
+    @Override
     public boolean exists(String name) throws IOException {
         return (getEntry(name) != null);
     }
@@ -270,6 +286,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
     /**
      * @return an input stream giving its entry name
      */
+    @Override
     public InputStream getEntry(String name) throws IOException {
 
         // we are just interested in the file name, not the 
@@ -300,6 +317,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
      * @param name the entry name
      * @return the entry size
      */
+    @Override
     public long getEntrySize(String name) {
         if (elements.contains(name)) {
             ZipEntry je = jarFile.getEntry(name);
@@ -320,6 +338,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
     /** 
      * @return the manifest
      */
+    @Override
     public java.util.jar.Manifest getManifest() throws java.io.IOException {
         // no manifest in DeploymentPlan
         return new Manifest();
@@ -330,6 +349,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
      *
      * @return the path for this archive.
      */
+    @Override
     public URI getURI() {
         return uri;
     }
@@ -337,6 +357,7 @@ public class DeploymentPlanArchive extends JarArchive implements ReadableArchive
     /**
      * rename the underlying archive
      */
+    @Override
     public boolean renameTo(String name) {
         File f = new File(uri);
         File to  = new File(name);
