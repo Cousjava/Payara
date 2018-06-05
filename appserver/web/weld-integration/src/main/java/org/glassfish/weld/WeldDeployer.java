@@ -487,7 +487,6 @@ public class WeldDeployer extends SimpleDeployer<WeldContainer, WeldApplicationC
         if (bootstrap != null) {
             DeploymentImpl deploymentImpl = applicationInfo.getTransientAppMetaData(WELD_DEPLOYMENT, DeploymentImpl.class);
             deploymentImpl.buildDeploymentGraph();
-
             List<BeanDeploymentArchive> archives = deploymentImpl.getBeanDeploymentArchives();
 
             addResourceLoaders(archives);

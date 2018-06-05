@@ -226,23 +226,15 @@ public class OpenApiService implements PostConstruct, PreDestroy, EventListener,
                 // Attempt to load the classes
                 .map(x -> {
                     Class<?> loadedClass = null;
-                    // Attempt to load the class, ignoring any errors
+                    // Attempt to find the class, ignoring any errors
 					try {
-						loadedClass = appClassLoader.loadClass(x);
+						loadedClass = Class.forName(x, true, appClassLoader);
+                        // If the class can be loaded, check that everything in the class also can
+                        loadedClass.getDeclaredFields();
+                        loadedClass.getDeclaredMethods();
+                        loadedClass.getDeclaredAnnotations();
 					} catch (Throwable t) {
-                    }
-					try {
-						loadedClass = Class.forName(x);
-					} catch (Throwable t) {
-                    }
-                    // If the class can be loaded, check that everything in the class also can
-                    if (loadedClass != null) {
-                        try {
-                            loadedClass.getDeclaredFields();
-                            loadedClass.getDeclaredMethods();
-                        } catch (Throwable t) {
-                            return null;
-                        }
+                        loadedClass = null;
                     }
                     return loadedClass;
                 })
