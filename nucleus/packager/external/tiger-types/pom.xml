@@ -72,8 +72,7 @@
                 <artifactId>maven-bundle-plugin</artifactId>
                 <configuration>
                     <instructions>
-                        <!-- Use HK2 version as hk2-utils requires tiger-types in its OSGi in 2.6.0 -->
-                        <Export-Package>org.jvnet.tiger_types;version="${hk2.version}"</Export-Package>
+                        <Export-Package>org.jvnet.tiger_types;version="${tiger.types.version}"</Export-Package>
                         <Private-Package>*</Private-Package>
                         <Include-Resource>META-INF/hk2-locator/=target/classes/META-INF/hk2-locator/</Include-Resource>
                     </instructions>
