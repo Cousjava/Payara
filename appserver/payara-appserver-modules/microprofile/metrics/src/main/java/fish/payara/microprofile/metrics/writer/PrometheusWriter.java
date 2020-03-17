@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
- *    Copyright (c) [2018-2019] Payara Foundation and/or its affiliates. All rights reserved.
+ *    Copyright (c) [2018-2020] Payara Foundation and/or its affiliates. All rights reserved.
  * 
  *     The contents of this file are subject to the terms of either the GNU
  *     General Public License Version 2 only ("GPL") or the Common Development
@@ -56,10 +56,12 @@ import fish.payara.microprofile.metrics.exception.NoSuchMetricException;
 import fish.payara.microprofile.metrics.exception.NoSuchRegistryException;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import org.eclipse.microprofile.metrics.Counter;
 import org.eclipse.microprofile.metrics.ConcurrentGauge;
 import org.eclipse.microprofile.metrics.Gauge;
@@ -68,9 +70,11 @@ import org.eclipse.microprofile.metrics.Metadata;
 import org.eclipse.microprofile.metrics.Meter;
 import org.eclipse.microprofile.metrics.Metric;
 import org.eclipse.microprofile.metrics.MetricID;
+import org.eclipse.microprofile.metrics.MetricRegistry;
 import static org.eclipse.microprofile.metrics.MetricRegistry.Type.APPLICATION;
 import static org.eclipse.microprofile.metrics.MetricRegistry.Type.BASE;
 import static org.eclipse.microprofile.metrics.MetricRegistry.Type.VENDOR;
+import org.eclipse.microprofile.metrics.MetricType;
 import org.eclipse.microprofile.metrics.Timer;
 import org.glassfish.internal.api.Globals;
 
@@ -149,6 +153,40 @@ public class PrometheusWriter implements MetricsWriter {
                 service.getMetadataAsMap(registryName, metricName)
         );
     }
+    
+    private void writeMetricMap(StringBuilder builder, String registryName, Map<String, Metadata> metricMetadataMap) throws NoSuchRegistryException {
+        
+        MetricRegistry registry = service.getRegistry(registryName);
+        PrometheusExporter exporter = new PrometheusExporter(builder);
+        
+        for (Entry<String, Metadata> entry : metricMetadataMap.entrySet()) {
+            String name = entry.getKey();
+            
+            List<Entry<MetricID, Metric>> metricEntries = registry.getMetrics().entrySet().stream().filter((t) -> {
+                return t.getKey().getName().equals(name);
+            }).collect(Collectors.toList());
+            
+            Metadata metricMetadata = entry.getValue();
+            String description = metricMetadata.getDescription().orElse(EMPTY_STRING);
+            switch (metricMetadata.getTypeRaw()) {
+                case COUNTER:
+                    exporter.exportCounter(metricEntries, name, description);
+                    break;
+                case CONCURRENT_GAUGE:
+                    exporter.exportConcurrentGuage(metricEntries, name, description);
+                    break;
+                case GAUGE:
+                    exporter.exportGauge(metricEntries, name, description, metricMetadata.getUnit().orElse(EMPTY_STRING));
+                    break;
+                case HISTOGRAM:
+                    
+                    break;
+                default:
+                    break;
+            }
+            
+        }
+    }
 
     private void writeMetricMap(StringBuilder builder, String registryName, Map<MetricID, Metric> metricMap, Map<String, Metadata> metricMetadataMap) {
         for (Entry<MetricID, Metric> entry : metricMap.entrySet()) {
@@ -169,14 +207,14 @@ public class PrometheusWriter implements MetricsWriter {
             
             String unit = metricMetadata.getUnit().orElse(EMPTY_STRING);
 
-            PrometheusExporter exporter = new PrometheusExporter(builder, metricId);
+            PrometheusExporter exporter = new PrometheusExporter(builder);
 
             if (Counter.class.isInstance(metric)) {
-                exporter.exportCounter((Counter) metric, name, description, metricId.getTagsAsString()); 
+                //exporter.exportCounter((Counter) metric, name, description, metricId.getTagsAsString()); 
             } else if (ConcurrentGauge.class.isInstance(metric)) {
-                exporter.exportConcurrentGuage((ConcurrentGauge) metric, name, description, metricId.getTagsAsString());
+                //exporter.exportConcurrentGuage((ConcurrentGauge) metric, name, description, metricId.getTagsAsString());
             } else if (Gauge.class.isInstance(metric)) {
-                exporter.exportGauge((Gauge) metric, name, description, metricId.getTagsAsString(), unit);
+               // exporter.exportGauge((Gauge) metric, name, description, metricId.getTagsAsString(), unit);
             } else if (Histogram.class.isInstance(metric)) {
                 exporter.exportHistogram((Histogram) metric, name, description, metricId.getTagsAsString(), unit);
             } else if (Meter.class.isInstance(metric)) {

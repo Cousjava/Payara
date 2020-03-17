@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    Copyright (c) [2018-2019] Payara Foundation and/or its affiliates. All rights reserved.
+ *    Copyright (c) [2018-2020] Payara Foundation and/or its affiliates. All rights reserved.
  *
  *     The contents of this file are subject to the terms of either the GNU
  *     General Public License Version 2 only ("GPL") or the Common Development
@@ -50,6 +50,9 @@
 
 package fish.payara.microprofile.metrics.writer;
 
+import static fish.payara.microprofile.Constants.EMPTY_STRING;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.microprofile.metrics.ConcurrentGauge;
@@ -57,8 +60,10 @@ import org.eclipse.microprofile.metrics.Counter;
 import org.eclipse.microprofile.metrics.Counting;
 import org.eclipse.microprofile.metrics.Gauge;
 import org.eclipse.microprofile.metrics.Histogram;
+import org.eclipse.microprofile.metrics.Metadata;
 import org.eclipse.microprofile.metrics.Meter;
 import org.eclipse.microprofile.metrics.Metered;
+import org.eclipse.microprofile.metrics.Metric;
 import org.eclipse.microprofile.metrics.MetricID;
 import static org.eclipse.microprofile.metrics.MetricType.COUNTER;
 import static org.eclipse.microprofile.metrics.MetricType.CONCURRENT_GAUGE;
@@ -88,7 +93,7 @@ import static org.eclipse.microprofile.metrics.MetricUnits.SECONDS;
 import org.eclipse.microprofile.metrics.Sampling;
 import org.eclipse.microprofile.metrics.Timer;
 
-public class PrometheusExporter {
+class PrometheusExporter {
 
     private static final String LF = "\n";
     private static final String LEFT_BRACES = "{";
@@ -142,42 +147,66 @@ public class PrometheusExporter {
     private static final Logger LOGGER = Logger.getLogger(PrometheusExporter.class.getName());
 
     private final StringBuilder builder;
-    private final MetricID metricID;
 
-    public PrometheusExporter(StringBuilder builder, MetricID metricID){
+    public PrometheusExporter(StringBuilder builder){
         this.builder = builder;
-        this.metricID = metricID;
     }
 
-    public void exportCounter(Counter counter, String name, String description, String tags) {
-        writeTypeHelpValueLine(name, COUNTER.toString(), description, counter.getCount(), tags, TOTAL_SUFFIX);
+    void exportCounter(List<Entry<MetricID, Metric>> counters, String name, String description) {
+        writeTypeLine(name, COUNTER.toString(), TOTAL_SUFFIX);
+        writeHelpLine(name, description, TOTAL_SUFFIX);
+        for (Entry<MetricID, Metric> counter: counters) {
+            writeValueLine(name, ((Counter) counter).getCount(), counter.getKey().getTagsAsString(), TOTAL_SUFFIX);
+        }
     }
     
-    void exportConcurrentGuage(ConcurrentGauge concurrentGauge, String name, String description, String tags) {
-         writeTypeHelpValueLine(name + CURRENT_SUFFIX, CONCURRENT_GAUGE.toString(), description, concurrentGauge.getCount(), tags);
-         writeTypeHelpValueLine(name + MIN_SUFFIX, CONCURRENT_GAUGE.toString(), description, concurrentGauge.getMin(), tags);
-         writeTypeHelpValueLine(name + MAX_SUFFIX, CONCURRENT_GAUGE.toString(), description, concurrentGauge.getMax(), tags);
+    void exportConcurrentGuage(List<Entry<MetricID, Metric>> concurrentGauges, String name, String description) {
+        writeTypeLine(name + CURRENT_SUFFIX, CONCURRENT_GAUGE.toString(), null);
+        writeHelpLine(name + CURRENT_SUFFIX, description, PERCENT);
+        for (Entry<MetricID, Metric> gauge: concurrentGauges) {
+            writeValueLine(name + CURRENT_SUFFIX, ((ConcurrentGauge) gauge).getCount(), gauge.getKey().getTagsAsString(), null);
+        }
+        writeTypeLine(name + MIN_SUFFIX, CONCURRENT_GAUGE.toString(), null);
+        for (Entry<MetricID, Metric> gauge: concurrentGauges) {
+            writeValueLine(name + MIN_SUFFIX, ((ConcurrentGauge) gauge).getMin(), gauge.getKey().getTagsAsString(), null);
+        }
+        writeTypeLine(name + MAX_SUFFIX, CONCURRENT_GAUGE.toString(), null);
+        for (Entry<MetricID, Metric> gauge: concurrentGauges) {
+            writeValueLine(name + MAX_SUFFIX, ((ConcurrentGauge) gauge).getMin(), gauge.getKey().getTagsAsString(), null);
+        }
     }
-
-    public void exportGauge(Gauge<?> gauge, String name, String description, String tags, String unit) {
+    
+    void exportGauge(List<Entry<MetricID, Metric>> gauges, String name, String description, String unit) {
+        writeTypeLine(name, GAUGE.toString(), TOTAL_SUFFIX);
+        writeHelpLine(name, description, TOTAL_SUFFIX);
+        for (Entry<MetricID, Metric> gauge: gauges) {
+            Number value = getGaugeValue((Gauge<?>) gauge, unit);
+            if (value == null) {
+                continue;
+            }
+            writeValueLine(name + CURRENT_SUFFIX, value, gauge.getKey().getTagsAsString(), getAppendUnit(unit));
+        }
+    }
+    
+    private Number getGaugeValue(Gauge<?> gauge, String unit) {
         Number value;
         Object gaugeValue;
         try {
             gaugeValue = gauge.getValue();
         } catch (IllegalStateException e) {
             // The forwarding gauge is unloaded
-            return;
+            return null;
         }
         if (!Number.class.isInstance(gaugeValue)) {
-            LOGGER.log(Level.FINER, "Skipping Prometheus output for Gauge: {0} of type {1}", new Object[]{name, gaugeValue.getClass()});
-            return;
+            LOGGER.log(Level.FINER, "Skipping Prometheus output for Gauge: {0} of type {1}", new Object[]{gauge.toString(), gaugeValue.getClass()});
+            return null;
         }
         value = (Number) gaugeValue;
         Double conversionFactor = getConversionFactor(unit);
         if (!Double.isNaN(conversionFactor)) {
             value = value.doubleValue() * conversionFactor;
         }
-        writeTypeHelpValueLine(name, GAUGE.toString(), description, value, tags, getAppendUnit(unit));
+        return value;
     }
 
     public void exportHistogram(Histogram histogram, String name, String description, String tags, String unit) {
