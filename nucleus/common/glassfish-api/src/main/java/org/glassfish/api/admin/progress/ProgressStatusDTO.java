@@ -37,6 +37,8 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
+
 package org.glassfish.api.admin.progress;
 
 import java.util.HashSet;
@@ -78,10 +80,7 @@ public class ProgressStatusDTO {
     protected int totalStepCount = -1;
     protected int currentStepCount = 0;
     protected boolean completed = false;
-    protected Set<ChildProgressStatusDTO> children = new HashSet<ChildProgressStatusDTO>();
-
-    public ProgressStatusDTO() {
-    }
+    protected Set<ChildProgressStatusDTO> children = new HashSet<>();
 
     public boolean isCompleted() {
         return completed;

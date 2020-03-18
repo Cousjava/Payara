@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
 
 package org.glassfish.api.admin;
 
@@ -46,8 +47,6 @@ import java.util.UUID;
 import java.util.logging.Logger;
 import javax.security.auth.Subject;
 import org.glassfish.api.ActionReport;
-import org.glassfish.api.admin.Payload.Inbound;
-import org.glassfish.api.admin.Payload.Outbound;
 import org.glassfish.api.admin.progress.ProgressStatusImpl;
 
 /**
@@ -58,12 +57,12 @@ import org.glassfish.api.admin.progress.ProgressStatusImpl;
 public class AdminCommandContextImpl implements  AdminCommandContext, Serializable {
     
     private  ActionReport report;
-    transient private final Logger logger;
-    transient private Payload.Inbound inboundPayload;
-    transient private Payload.Outbound outboundPayload;
-    transient private Subject subject; // Subject is Serializable but we want up to date Subject when deserializing 
+    private final transient Logger logger;
+    private transient Payload.Inbound inboundPayload;
+    private transient Payload.Outbound outboundPayload;
+    private transient Subject subject; // Subject is Serializable but we want up to date Subject when deserializing 
     private ProgressStatus progressStatus; //new ErrorProgressStatus();
-    transient private final AdminCommandEventBroker eventBroker;
+    private final transient AdminCommandEventBroker eventBroker;
     private final String jobId;
 
     public AdminCommandContextImpl(Logger logger, ActionReport report) {

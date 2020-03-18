@@ -51,7 +51,6 @@ import org.omg.CORBA.ORB;
 
 import java.rmi.Remote;
 import java.util.Hashtable;
-import java.util.Map;
 
 /**
  * The NamingManager provides an interface for various components to use naming

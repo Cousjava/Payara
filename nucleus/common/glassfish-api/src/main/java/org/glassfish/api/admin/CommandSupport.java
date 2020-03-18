@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
 
 package org.glassfish.api.admin;
 
@@ -119,14 +120,9 @@ public final class CommandSupport {
             final AdminCommandContext context,
             final Job instance) {
 
-        processAspects(serviceLocator, command, new Function() {
-            @Override
-            public AdminCommand apply(Annotation a,
-                    CommandAspectImpl<Annotation> aspect,
-                    AdminCommand command) {
-                aspect.init(a, command, context, instance);
-                return command;
-            }
+        processAspects(serviceLocator, command, (Annotation a, CommandAspectImpl<Annotation> aspect, AdminCommand command1) -> {
+            aspect.init(a, command1, context, instance);
+            return command1;
         });
     }
 
@@ -137,14 +133,9 @@ public final class CommandSupport {
         final AdminCommand command,
             final Job instance, boolean isNotify) {
 
-        processAspects(serviceLocator, command, new Function() {
-            @Override
-            public AdminCommand apply(Annotation a,
-                    CommandAspectImpl<Annotation> aspect,
-                    AdminCommand command) {
-                aspect.done(a, command, instance);
-                return command;
-            }
+        processAspects(serviceLocator, command, (Annotation a, CommandAspectImpl<Annotation> aspect, AdminCommand command1) -> {
+            aspect.done(a, command1, instance);
+            return command1;
         });
         if (isNotify) {
             CommandAspectFacade commandAspectFacade = serviceLocator.getService(CommandAspectFacade.class);
@@ -169,14 +160,7 @@ public final class CommandSupport {
         final AdminCommand command,
             final ActionReport report) {
 
-        return processAspects(serviceLocator, command, new Function() {
-            @Override
-            public AdminCommand apply(Annotation a,
-                CommandAspectImpl<Annotation> cai,
-                AdminCommand command) {
-                return cai.createWrapper(a, model, command, report);
-            }
-        });
+        return processAspects(serviceLocator, command, (Annotation a, CommandAspectImpl<Annotation> cai, AdminCommand command1) -> cai.createWrapper(a, model, command1, report));
     }
 
     private static AdminCommand processAspects(ServiceLocator serviceLocator,
@@ -204,6 +188,7 @@ public final class CommandSupport {
         return wrappedCommand;
     }
 
+    @FunctionalInterface
     private interface Function {
         public AdminCommand apply(Annotation ca, CommandAspectImpl<Annotation> cai, AdminCommand object);
     }

@@ -40,7 +40,6 @@
 
 package org.glassfish.api;
 
-import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.METHOD;

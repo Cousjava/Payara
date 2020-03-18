@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
 
 package com.sun.appserv.server;
 
@@ -48,31 +49,31 @@ package com.sun.appserv.server;
  */
 public class LifecycleEvent extends java.util.EventObject {
     
-    private int eventType;
-    private Object eventData;
+    private final int eventType;
+    private final Object eventData;
     private transient LifecycleEventContext ctx = null;
     
     // Lifecycle event types 
 
     /** Server is initializing subsystems and setting up the runtime environment.
     */
-    public final static int INIT_EVENT = 0; 
+    public static final int INIT_EVENT = 0; 
 
     /** Server is starting up applications
      */
-    public final static int STARTUP_EVENT = 1; 
+    public static final int STARTUP_EVENT = 1; 
 
     /** Server is ready to service requests
      */
-    public final static int READY_EVENT = 2; 
+    public static final int READY_EVENT = 2; 
 
     /** Server is shutting down applications
      */
-    public final static int SHUTDOWN_EVENT = 3; 
+    public static final int SHUTDOWN_EVENT = 3; 
 
     /** Server is terminating the subsystems and the runtime environment.
      */
-    public final static int TERMINATION_EVENT = 4; 
+    public static final int TERMINATION_EVENT = 4; 
 
     
     /**

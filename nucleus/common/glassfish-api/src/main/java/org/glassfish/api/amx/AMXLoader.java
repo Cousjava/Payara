@@ -37,17 +37,12 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
 
 package org.glassfish.api.amx;
 
 import org.jvnet.hk2.annotations.Contract;
-
-import javax.management.JMException;
-import javax.management.MBeanServer;
 import javax.management.ObjectName;
-
-import org.glassfish.external.probe.provider.annotations.Probe;
-
 import org.glassfish.external.amx.AMXGlassfish;
 
 /**

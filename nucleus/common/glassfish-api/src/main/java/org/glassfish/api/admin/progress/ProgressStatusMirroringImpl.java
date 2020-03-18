@@ -37,10 +37,10 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
+
 package org.glassfish.api.admin.progress;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.glassfish.api.admin.ProgressStatus;
 
 /** This implementation is used for modeling of command execution with 
@@ -52,8 +52,6 @@ import org.glassfish.api.admin.ProgressStatus;
  */
 //TODO: Move to kernel if possible. It is now in API only because ProgressStatusImpl is here, too
 public class ProgressStatusMirroringImpl extends ProgressStatusBase {
-    
-    //private Collection<ProgressStatusBase> mirroreds = new ArrayList<ProgressStatusBase>();
     
     public ProgressStatusMirroringImpl(String name, ProgressStatusBase parent, String id) {
         super(name, -1, parent, id);

@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  *
- * Portions Copyright [2017] Payara Foundation and/or affiliates
+ * Portions Copyright [2017-2020] Payara Foundation and/or affiliates
  */
 
 package org.glassfish.api;
@@ -176,7 +176,7 @@ public abstract class ActionReport implements Serializable {
         String message;
         String childrenType;
 
-        List<MessagePart> children = new ArrayList<MessagePart>();
+        List<MessagePart> children = new ArrayList<>();
 
         public MessagePart addChild() {
             MessagePart newPart = new MessagePart();
@@ -290,7 +290,7 @@ public abstract class ActionReport implements Serializable {
         extraProperties = properties;
     }
 
-    private Map resultTypes = new ConcurrentHashMap();
+    private final Map<Class, Object> resultTypes = new ConcurrentHashMap<>();
 
     /**
      * Gets a type that was set by the command implementation

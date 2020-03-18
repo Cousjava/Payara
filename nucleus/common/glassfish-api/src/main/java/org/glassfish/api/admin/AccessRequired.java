@@ -37,6 +37,8 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
+
 package org.glassfish.api.admin;
 
 import java.lang.annotation.ElementType;
@@ -298,7 +300,7 @@ public @interface AccessRequired {
          * @return 
          */
         public static <U> Collection<U> relatedObjects(final Collection<AccessCheck<U>> accessChecks, final boolean successfulOnly) {
-            return new RelatedObjectCollection<U>(accessChecks, successfulOnly);
+            return new RelatedObjectCollection<>(accessChecks, successfulOnly);
         }
         
         
@@ -605,6 +607,8 @@ public @interface AccessRequired {
      * Utility methods used both from AccessCheck and from CommandSecurityChecker.
      */
     public static class Util {
+        private Util() {}
+        
         public static String resourceNameFromDom(Dom d) {
             Dom lastDom = null;
             final StringBuilder path = new StringBuilder();
@@ -619,10 +623,8 @@ public @interface AccessRequired {
                 path.insert(0, pathSegment);
                 d = d.parent();
             }
-            if (lastDom != null) {
-                if (lastDom.getKey() != null) {
-                    path.insert(0, pluralize(lastDom.model.getTagName()) + '/');
-                }
+            if (lastDom != null && lastDom.getKey() != null) {
+                path.insert(0, pluralize(lastDom.model.getTagName()) + '/');
             }
             return path.toString();
         }

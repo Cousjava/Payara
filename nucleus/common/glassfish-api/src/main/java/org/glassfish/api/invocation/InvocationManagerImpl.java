@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2016-2019] [Payara Foundation and/or its affiliates]
+// Portions Copyright [2016-2020] [Payara Foundation and/or its affiliates]
 package org.glassfish.api.invocation;
 
 import static java.lang.ThreadLocal.withInitial;
@@ -90,7 +90,7 @@ public class InvocationManagerImpl implements InvocationManager {
         if (handlers == null) {
             invHandlers = null;
         } else {
-            LinkedList<ComponentInvocationHandler> localHandlers = new LinkedList<ComponentInvocationHandler>();
+            LinkedList<ComponentInvocationHandler> localHandlers = new LinkedList<>();
             for (ComponentInvocationHandler handler : handlers) {
                 localHandlers.add(handler);
             }
@@ -103,11 +103,12 @@ public class InvocationManagerImpl implements InvocationManager {
         }
 
         frames = new InheritableThreadLocal<InvocationArray<ComponentInvocation>>() {
-
+            @Override
             protected InvocationArray<ComponentInvocation> initialValue() {
                 return new InvocationArray<>();
             }
 
+            @Override
             protected InvocationArray<ComponentInvocation> childValue(InvocationArray<ComponentInvocation> parentValue) {
                 return computeChildTheadInvocation(parentValue);
             }
@@ -120,6 +121,7 @@ public class InvocationManagerImpl implements InvocationManager {
         frames.set(computeChildTheadInvocation((InvocationArray<ComponentInvocation>) parentValue));
     }
 
+    @Override
     public <T extends ComponentInvocation> void preInvoke(T invocation) throws InvocationException {
 
         InvocationArray<ComponentInvocation> invocationArray = frames.get();
@@ -164,6 +166,7 @@ public class InvocationManagerImpl implements InvocationManager {
 
     }
 
+    @Override
     public <T extends ComponentInvocation> void postInvoke(T invocation) throws InvocationException {
 
         // Get this thread's ArrayList
@@ -227,7 +230,7 @@ public class InvocationManagerImpl implements InvocationManager {
     @Override
     public boolean isInvocationStackEmpty() {
         InvocationArray<ComponentInvocation> invocations = frames.get();
-        return invocations == null || invocations.size() == 0;
+        return invocations == null || invocations.isEmpty();
     }
 
     /**
@@ -286,7 +289,7 @@ public class InvocationManagerImpl implements InvocationManager {
     private InvocationArray<ComponentInvocation> computeChildTheadInvocation(InvocationArray<ComponentInvocation> parentValue) {
 
         // Always creates a new ArrayList
-        InvocationArray<ComponentInvocation> childInvocationArray = new InvocationArray<ComponentInvocation>();
+        InvocationArray<ComponentInvocation> childInvocationArray = new InvocationArray<>();
         InvocationArray<ComponentInvocation> parentInvocationArray = parentValue;
 
         if (parentInvocationArray != null && parentInvocationArray.size() > 0 && parentInvocationArray.outsideStartup()) {
@@ -363,11 +366,11 @@ public class InvocationManagerImpl implements InvocationManager {
         List<RegisteredComponentInvocationHandler> setRegCompInvHandlers = regCompInvHandlerMap.get(type);
 
         if (setRegCompInvHandlers == null) {
-            setRegCompInvHandlers = new ArrayList<RegisteredComponentInvocationHandler>();
+            setRegCompInvHandlers = new ArrayList<>();
             regCompInvHandlerMap.put(type, setRegCompInvHandlers);
         }
 
-        if (setRegCompInvHandlers.size() == 0) {
+        if (setRegCompInvHandlers.isEmpty()) {
             setRegCompInvHandlers.add(handler);
         }
     }

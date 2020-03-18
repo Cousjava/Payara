@@ -37,10 +37,9 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
 
 package org.glassfish.api.deployment;
-
-import com.sun.enterprise.module.ModuleDefinition;
 
 /**
  * MetaData associated with a Deployer. This is used by the deployment layers
@@ -58,7 +57,7 @@ import com.sun.enterprise.module.ModuleDefinition;
  */
 public class MetaData {
 
-    final static Class[] empty = new Class[0];
+    static final Class[] empty = new Class[0];
 
     private final boolean invalidatesCL;
     private final Class[] requires;
@@ -99,7 +98,7 @@ public class MetaData {
             return empty;
         }
         return provides;
-    };                 
+    }
 
     /**
      * Returns the list of types of metadata this deployer will require to run successfully

@@ -47,15 +47,17 @@ package org.glassfish.api;
  * @Author Jerome Dochez
  */
 public class ManifestConstants {
+    
+    private ManifestConstants() {}
 
     /**
      * Hooks up a module class loader to all implementation of the comma separated
      * list of contracts.
      */
-    public final static String GLASSFISH_REQUIRE_SERVICES = "GlassFish-require-services";
+    public static final String GLASSFISH_REQUIRE_SERVICES = "GlassFish-require-services";
 
     /**
      *	Adds a directory as an additional OSGi repository.
      */
-    public final static String GLASSFISH_REQUIRE_REPOSITORY = "GlassFish-require-repository";
+    public static final String GLASSFISH_REQUIRE_REPOSITORY = "GlassFish-require-repository";
 }

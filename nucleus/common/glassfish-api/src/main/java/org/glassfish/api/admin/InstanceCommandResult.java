@@ -37,11 +37,11 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
 
 package org.glassfish.api.admin;
 
 public class InstanceCommandResult {
-    public InstanceCommandResult() {}
 
     public InstanceCommand getInstanceCommand() { return this.ic;}
 

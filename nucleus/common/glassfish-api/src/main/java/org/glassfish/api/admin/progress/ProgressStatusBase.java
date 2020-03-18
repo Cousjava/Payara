@@ -37,6 +37,8 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2019] Payara Foundation and/or affiliates
+
 package org.glassfish.api.admin.progress;
 
 import java.io.Serializable;
@@ -87,10 +89,7 @@ public abstract class ProgressStatusBase implements ProgressStatus, Serializable
             if (this.allocatedSteps != other.allocatedSteps) {
                 return false;
             }
-            if (this.progressStatus != other.progressStatus && (this.progressStatus == null || !this.progressStatus.equals(other.progressStatus))) {
-                return false;
-            }
-            return true;
+            return !(this.progressStatus != other.progressStatus && (this.progressStatus == null || !this.progressStatus.equals(other.progressStatus)));
         }
 
         @Override
@@ -111,7 +110,7 @@ public abstract class ProgressStatusBase implements ProgressStatus, Serializable
     protected int currentStepCount = 0;
     protected ProgressStatusBase parent;
     protected boolean completed = false;
-    protected Set<ChildProgressStatus> children = new HashSet<ChildProgressStatus>();
+    protected Set<ChildProgressStatus> children = new HashSet<>();
 
     /** Construct unnamed {@code ProgressStatus}
      * 
@@ -392,7 +391,7 @@ public abstract class ProgressStatusBase implements ProgressStatus, Serializable
     }
     
     public synchronized Collection<ProgressStatusBase> getChildren() {
-        Collection<ProgressStatusBase> result = new ArrayList<ProgressStatusBase>(children.size());
+        Collection<ProgressStatusBase> result = new ArrayList<>(children.size());
         for (ChildProgressStatus chld : children) {
             result.add(chld.getProgressStatus());
         }

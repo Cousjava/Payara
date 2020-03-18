@@ -40,8 +40,6 @@
 
 package com.sun.appserv.server;
 
-import java.util.Properties;
-
 /**
  * lifecycle modules implement <code>com.sun.appserv.server.LifecycleListener</code> interface. 
  * There is just one method in this interface: <code>handleEvent()</code> which posts server

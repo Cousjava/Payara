@@ -37,6 +37,8 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright Payara Foundation and/or affiliates
+
 package org.glassfish.api.admin.progress;
 
 import org.glassfish.api.admin.ProgressStatus;
@@ -139,10 +141,7 @@ public class ProgressStatusEventCreateChild extends ProgressStatusEvent {
         if (this.allocatedSteps != other.allocatedSteps) {
             return false;
         }
-        if (this.totalSteps != other.totalSteps) {
-            return false;
-        }
-        return true;
+        return this.totalSteps == other.totalSteps;
     }
     
 }

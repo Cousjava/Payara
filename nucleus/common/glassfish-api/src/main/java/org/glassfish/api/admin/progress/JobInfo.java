@@ -43,7 +43,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.File;
-import java.io.IOException;
 
 /**
  * This class contains information related to a job which will be persisted to jobs.xml

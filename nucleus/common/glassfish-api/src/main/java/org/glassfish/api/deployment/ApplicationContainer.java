@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-// Portions Copyright [2016-2017] [Payara Foundation and/or its affiliates]
+// Portions Copyright [2016-2020] [Payara Foundation and/or its affiliates]
 
 package org.glassfish.api.deployment;
 
@@ -61,7 +61,7 @@ public interface ApplicationContainer<T> {
      * Initialize the container post-startup of Hazelcast
      * Used for EJB timers right now
      */
-    default public void initialize() {};
+    default public void initialize() {}
 
     /**
      * Starts an application container. 

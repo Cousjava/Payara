@@ -37,6 +37,8 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
+
 package org.glassfish.api.admin.progress;
 
 import org.glassfish.api.admin.ProgressStatus;
@@ -89,10 +91,10 @@ public class ProgressStatusEventComplete extends ProgressStatusEvent implements 
             return false;
         }
         final ProgressStatusEventComplete other = (ProgressStatusEventComplete) obj;
-        if ((this.message == null) ? (other.message != null) : !this.message.equals(other.message)) {
-            return false;
+        if (this.message == null) {
+            return other.message == null;
         }
-        return true;
+        return this.message.equals(other.message);
     }
     
     

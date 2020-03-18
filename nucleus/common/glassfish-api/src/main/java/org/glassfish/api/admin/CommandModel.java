@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
 
 package org.glassfish.api.admin;
 
@@ -135,7 +136,7 @@ public abstract class CommandModel {
      * @return the command's parameters models.
      */
     public Collection<ParamModel> getParameters() {
-        ArrayList<ParamModel> copy = new ArrayList<ParamModel>();
+        ArrayList<ParamModel> copy = new ArrayList<>();
         for (String name : getParametersNames()) {
             copy.add(getModelFor(name));
         }
@@ -174,7 +175,7 @@ public abstract class CommandModel {
      * Model for a command parameter.
      *
      */
-    public static abstract class ParamModel {
+    public abstract static class ParamModel {
 
         /**
          * Returns the command parameter name.

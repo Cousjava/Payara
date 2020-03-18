@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2019] Payara Foundation and/or affiliates
 
 package org.glassfish.api.admin.config;
 
@@ -57,7 +58,7 @@ import javax.validation.constraints.NotNull;
 @Configured
 public interface ApplicationName extends ConfigBeanProxy, Payload {
 
-    final static String NAME_APP_REGEX = "[\\p{L}\\p{N}_][\\p{L}\\p{N}\\-_\\./;:#]*";
+    static final String NAME_APP_REGEX = "[\\p{L}\\p{N}_][\\p{L}\\p{N}\\-_\\./;:#]*";
 
     /**
      *  Name of the configured object

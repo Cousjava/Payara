@@ -40,7 +40,6 @@
 
 package org.glassfish.api.admin.config;
 
-import org.jvnet.hk2.config.ConfigBeanProxy;
 import org.jvnet.hk2.config.Configured;
 
 /**

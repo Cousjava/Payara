@@ -41,7 +41,6 @@
 package org.glassfish.api.admin;
 
 import org.glassfish.api.ActionReport;
-import org.glassfish.api.Param;
 import org.jvnet.hk2.annotations.Contract;
 import org.jvnet.hk2.component.MultiMap;
 

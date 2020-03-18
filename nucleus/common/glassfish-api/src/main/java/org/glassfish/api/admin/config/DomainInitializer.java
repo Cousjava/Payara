@@ -37,11 +37,11 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
 
 package org.glassfish.api.admin.config;
 
 import org.jvnet.hk2.annotations.Contract;
-import org.glassfish.api.admin.config.Container;
 
 /**
  * Marker interface to mark inhabitants that require some minimal initial 
@@ -57,6 +57,8 @@ public interface DomainInitializer {
      *
      * See {@link Attribute#value()} for how the default value is inferred.
      *
+     * @param initialCtx Config to be inserted
+     * @return Container including the config
      */
     public <T extends Container> T getInitialConfig(DomainContext initialCtx);
 }

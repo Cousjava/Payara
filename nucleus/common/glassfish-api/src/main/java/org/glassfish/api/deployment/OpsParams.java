@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  *
- * Portions Copyright [2017] Payara Foundation and/or affiliates
+ * Portions Copyright [2017-2020] Payara Foundation and/or affiliates
  */
 
 package org.glassfish.api.deployment;
@@ -68,79 +68,43 @@ public abstract class OpsParams implements CommandParameters {
     public enum Origin { 
         load, deploy, deploy_instance, unload, undeploy, create_application_ref,        mt_provision, mt_unprovision;
 
-        // whether it's part of the deployment, on DAS or on instance
+        /** Whether it's part of the deployment, on DAS or on instance */
         public boolean isDeploy() {
-            if (this == Origin.deploy || this == Origin.deploy_instance) {
-                return true;
-            }    
-            else {
-                return false;
-            }
+            return this == Origin.deploy || this == Origin.deploy_instance;
         }
 
-        // whether it's loading application only
+        /** Whether it's loading application only */
         public boolean isLoad() {
-            if (this == Origin.load) {
-                return true;
-            }    
-            else {
-                return false;
-            }
+            return this == Origin.load;
         }
 
-        // whether the artifacts are already present and no need to 
-        // generate
+        /** Whether the artifacts are already present and no need to 
+         * generate 
+        */
         public boolean isArtifactsPresent() {
-            if (this == Origin.load || this == Origin.deploy_instance || 
-                this == Origin.create_application_ref) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return this == Origin.load || this == Origin.deploy_instance || this == Origin.create_application_ref;
         }
 
-        // whether we need to clean the artifacts
-        // we need to do this for undeployment and deployment failure 
-        // clean up
+        /** Whether we need to clean the artifacts
+         * we need to do this for undeployment and deployment failure 
+         * clean up */
         public boolean needsCleanArtifacts() {
-            if (this == Origin.undeploy || this == Origin.deploy 
-                || this == Origin.mt_unprovision) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return this == Origin.undeploy || this == Origin.deploy || this == Origin.mt_unprovision;
         }
 
-        // whether it's undeploy
+        /** Whether it's undeploy */
         public boolean isUndeploy() {
-            if (this == Origin.undeploy) {
-                return true;
-            }    
-            else {
-                return false;
-            }
+            return this == Origin.undeploy;
         }
 
-        // whether it's unloading application only
+        /** Whether it's unloading application only */
         public boolean isUnload() {
-            if (this == Origin.unload) {
-                return true;
-            }    
-            else {
-                return false;
-            }
+            return this == Origin.unload;
         }
 
         // whether it's creating application reference
         public boolean isCreateAppRef() {
-            if (this == Origin.create_application_ref) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return this == Origin.create_application_ref;
         }
     }
 

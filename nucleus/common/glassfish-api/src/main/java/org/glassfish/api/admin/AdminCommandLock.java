@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  *
- * Portions Copyright [2017-2019] Payara Foundation and/or affiliates
+ * Portions Copyright [2017-2020] Payara Foundation and/or affiliates
  */
 
 package org.glassfish.api.admin;
@@ -95,9 +95,8 @@ public class AdminCommandLock {
 
     public void dumpState(Logger logger, Level level) {
         if (logger.isLoggable(level)) {
-            logger.log(level, "Current locking conditions are " + rwlock.getReadLockCount()
-                         + "/"+ rwlock.getReadHoldCount() + " shared locks"
-                         + "and " + rwlock.getWriteHoldCount() + " write lock");
+            logger.log(level, "Current locking conditions are {0}/{1} shared locksand {2} write lock",
+                    new Object[]{rwlock.getReadLockCount(), rwlock.getReadHoldCount(), rwlock.getWriteHoldCount()});
         }
     }
 
@@ -161,9 +160,7 @@ public class AdminCommandLock {
         }
         if (badTimeOutValue) {
             //XXX: Deal with logger injection attack.
-            logger.log(Level.INFO,
-                       "Bad value com.sun.aas.commandLockTimeOut: "
-                       + timeout_s + ". Using 30 seconds.");
+            logger.log(Level.INFO, "Bad value com.sun.aas.commandLockTimeOut: {0}. Using 30 seconds.", timeout_s);
             timeout = 30;
         }
 

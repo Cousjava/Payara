@@ -37,8 +37,8 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2016-2020] [Payara Foundation and/or its affiliates]
 
-// Portions Copyright [2016] [Payara Foundation and/or its affiliates]
 package org.glassfish.api.admin;
 
 /**
@@ -107,7 +107,7 @@ public enum RuntimeType {
         return this == SINGLE_INSTANCE;
     }
     
-    public final static RuntimeType getDefault() {
+    public static final RuntimeType getDefault() {
         return DAS;
     }
     

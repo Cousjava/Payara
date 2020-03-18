@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
 
 package org.glassfish.api.admin;
 
@@ -62,7 +63,7 @@ public @interface CommandLock {
     /**
      * The type of command lock.
      */
-    public enum LockType { NONE, SHARED, EXCLUSIVE };
+    public enum LockType { NONE, SHARED, EXCLUSIVE }
 
     /**
      * Returns the type of lock to acquire.

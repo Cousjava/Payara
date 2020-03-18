@@ -37,6 +37,8 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2020] Payara Foundation and/or affiliates
+
 package org.glassfish.api.logging;
 
 import java.text.MessageFormat;
@@ -50,6 +52,8 @@ import java.util.logging.Logger;
  *
  */
 public final class LogHelper {
+    
+    private LogHelper() {}
 
     /**
      * Logs a message with the given level, message, parameters and <code>Throwable</code>.
