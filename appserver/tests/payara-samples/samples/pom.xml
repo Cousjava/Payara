@@ -16,7 +16,7 @@
 
     <modules>
         <!-- This module must run first, because it collides with some change made by other test(s) -->
-<!--        <module>payara-expression-config-properties</module>
+        <module>payara-expression-config-properties</module>
        <module>asadmin</module>
         <module>clustered-singleton</module>
         <module>custom-loginmodule-realm</module>
@@ -30,14 +30,14 @@
         <module>jaxrs-rolesallowed-servlet</module>
         <module>jaxws-security</module> 
         <module>jaxws-tracing</module>
-        <module>microprofile-endpoints</module> -->
+        <module>microprofile-endpoints</module>
         <module>microprofile-healthcheck</module>
         <module>oauth2</module>
-        <!-- <module>openid</module>
+        <module>openid</module>
         <module>rest-management</module>
         <module>rolesPermitted</module>
         <module>realm-identity-stores</module>
-        <module>logging</module> -->
+        <module>logging</module>
     </modules>
 
     <dependencyManagement>
