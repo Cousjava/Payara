@@ -101,12 +101,14 @@ public class FaultToleranceExtension implements Extension {
         boolean markAllMethods = FaultToleranceUtils.isAnnotatedWithFaultToleranceAnnotations(type)
                 || isAnyAnnotationPresent(type, alternativeAsynchronousAnnotations);
         Class<?> targetClass = type.getJavaClass();
-        for (AnnotatedMethodConfigurator<?> methodConfigurator : processAnnotatedType.configureAnnotatedType().methods()) {
+        AnnotatedWrapper wrapper = new AnnotatedWrapper(processAnnotatedType.getAnnotatedType());
+        for (AnnotatedMethodConfigurator<?> methodConfigurator : wrapper.getMethods()) {
             AnnotatedMethod<?> method = methodConfigurator.getAnnotated();
             if (markAllMethods || FaultToleranceUtils.isAnnotatedWithFaultToleranceAnnotations(method)
                     || isAnyAnnotationPresent(method, alternativeAsynchronousAnnotations)) {
                 FaultTolerancePolicy.asAnnotated(targetClass, method.getJavaMember());
                 methodConfigurator.add(MARKER);
+                processAnnotatedType.setAnnotatedType(wrapper);
             }
         }
     }
